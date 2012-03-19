@@ -1,0 +1,2901 @@
+#include <omp.h>
+#include <R.h>
+#include <Rmath.h>
+#include <Rinternals.h>
+#include <R_ext/Lapack.h>
+
+void transCount(int *, int *, int *, double *, double *, double *, int *, double *, int *, double *);
+void transProbs(int *, int *, double *, double *);
+void wl(int *, int *, double *, double *, double *, int *);
+void nsph(int *, double *, double *);
+void cEmbedLen(int *, int *, double *, int *, int *, int *, double *, double *);
+void cEmbedOc(int *, int *, int *, double *, int *, int *, int *, double *);
+void cEmbedTrans(int *, int *, int *, int *, int *);
+void embedTProbs(int *, double *);
+void ellinter(int *, int *, double *, double *, double *);
+void getDst(int *, int *, double *, double *, double *);
+void fastMatProd(int *, int *, double *, int *, double *, double *);
+void jointProbs(int *, int *, int *, double *, double *);
+void tsimCate(int *, int *, double *, int *);
+void getNumCores(int *);
+void getNumSlaves(int *);
+void setNumSlaves(int *);
+void fastSVDprod(double *, double *, double *, int *);
+SEXP annealingSIM(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+SEXP geneticSIM(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+void expmat(double *, int *, double *);
+void predTPFIT(double *, double *, double *, int *, double *);
+void nrmPrMat(double *, int *);
+void revCoef(double *, double *, int *, double *);
+void predVET(double *, double *, int *, int *, double *, double *);
+void predMULTI(double *, double *, double *, int *, int *, int*, double *);
+void wd(double *, int *, int *, int *);
+void predPSEUDOVET(double *, double *, int *, int *, int *, double *, double *);
+void predPSEUDO(double *, double *, double *, int *, int *, int *, int *, int *, int *, double *);
+void rotaH(int *, double *, double *);
+void jointProbsMCS(double *, int *, double *, int *, int *, int *, int *, double *, double *, int*, double *);
+void rotaxes(int *, double *, double *);
+void fastrss(int *, double *, double *, double *);
+SEXP bclm(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+void knear(int *, int *, double *, int *, double *, int *, int *);
+void getIKPrbs(int *, int *, int *, int *, int *, int *, int *, int *, double *, double *, int *, double *, double *, double *);
+void getCKPrbs(int *, int *, int *, int *, int *, int *, int *, int *, double *, double *, int *, double *, double *, double *);
+void KjointProbsMCS(double *, int *, double *, int *, int *, int *, int *, int *, double *, int *, double *);
+void cEmbFrq(double *, int *, int *, double *, double *);
+void pathAlg(int *, int *, int *, double *, double *, int *, double *, int *, int *, double *, double *, double *, int *);
+void getPos(double *, int *, int *, int *, int *, int *);
+void nearDire(int *, int *, double *, int *);
+void objfun(int *, int *, int *, int *, double *, double *, double *, double *);
+void fastobjfun(int *, int *, int *, int *, int *, int *, int *, double *, double *, double *, int *, double *, double *);
+
+
+int *wo = NULL, *pv = NULL;
+double *h = NULL, *p = NULL, *TtLag = NULL, *tmpMat = NULL;
+char myMemErr[] = "There is not enough empty memory";
+
+#pragma omp threadprivate(wo, pv, h, p, TtLag, tmpMat)
+
+void transCount(int *n, int *data, int *nc, double *coords, double *dire, double *tolerance,
+                int *mpoints, double *bins, int *nk, double *trans) {
+  /* Counting occurrences with the same direction     
+          *n - sample size
+       *data - vector of data
+         *nc - dimension of the sample space
+     *coords - matrix of coordinates
+       *dire - fixed direction vector
+  *tolerance - angle tolecrance in radians
+    *mpoints - number of estimation points
+       *bins - vector of lags
+         *nk - number of categories
+      *trans - tensor of transaction ocuurrences */
+
+  int i, j, x, xh, ToF;
+  double *d = NULL;
+
+  #pragma omp parallel shared(nc, myMemErr)
+  {
+    if ((h = (double *) malloc(*nc * sizeof(double))) == NULL) {
+      #pragma omp critical
+      error("%s", myMemErr);
+    }
+    if ((p = (double *) malloc(*nc * sizeof(double))) == NULL) {
+      #pragma omp critical
+      error("%s", myMemErr);
+    }
+  }
+
+  if ((d = (double *) malloc(*nc * sizeof(double))) == NULL) {
+    #pragma omp critical
+    error("%s", myMemErr);
+  }
+
+  nsph(nc, dire, d); // polar transformation of dire
+
+  #pragma omp parallel for default(shared) private(i, j, x, xh, ToF) schedule(static, 1)
+  for (x = 0; x < *n - 1; x++) {        // These cilces are relative to
+    for (xh = x + 1; xh < *n; xh++) {   // each pair of observations
+
+      /* Computing of h vector and it's polar transformation */
+      for (i = *nc - 1; i >= 0; i--) {
+        h[i] = coords[*n * i + x] - coords[*n * i + xh];
+        p[i] = 0.0; // polar coordinates
+      }
+      nsph(nc, h, p); // polar transformation of h
+
+      /* Counting occurence */
+      ToF = 1;
+      for (j = 1; j < *nc; j++) {
+        if (!ISNAN(d[j])) {
+          ToF &= (p[j] >= d[j] - fabs(*tolerance));
+          ToF &= (p[j] <= d[j] + fabs(*tolerance));
+        }
+      }
+      for (i = 0; i < *mpoints; i++) {
+        if ((ToF != 0) && (p[0] <= bins[i])) {
+          #pragma omp critical 
+          {
+            ++trans[data[x] - 1 + *nk * (data[xh] - 1) + (int) (R_pow_di(*nk, 2) * i)];
+          }
+          break;
+        }
+      }
+
+    }
+  }
+
+  #pragma omp parallel
+  {
+    free(h);
+    free(p);
+  }
+
+}
+
+void transProbs(int *mpoints, int *nk, double *rwsum, double *empTR) {
+  /* Computing transition probabilities
+      *mpoints - number of estimation points
+           *nk - number of categories
+        *rwsum - dimension of the sample space
+        *empTR - tensor of transaction probabilities */
+
+  int i, j, k;
+
+  #pragma omp parallel for default(shared) private(i, j, k) schedule(static, 1)
+  for (i = 0; i < *mpoints; i++) {
+    for (j = 0; j < *nk; j++) {
+      for (k = 0; k < *nk; k++) {
+        empTR[*nk * k + j + (int) (R_pow_di(*nk, 2) * i)] /= rwsum[*nk * i + j];
+      }
+    }
+  }
+
+}
+
+void wl(int *n, int *nc, double *coords, double *dire, double *tolerance, int *id) {
+  /* Computing segments indicator  
+          *n - sample size
+         *nc - dimension of the sample space
+     *coords - matrix of coordinates
+       *dire - fixed direction vector
+  *tolerance - angle tolecrance in radians
+         *id - location id */
+
+  int x, xh, i, ToF, mpos;
+  double mymin = 0.0, *d = NULL, *mdst = NULL;
+
+  #pragma omp parallel shared(nc, myMemErr)
+  {
+    if ((h = (double *) malloc(*nc * sizeof(double))) == NULL) {
+      #pragma omp critical
+      error("%s", myMemErr);
+    }
+    if ((p = (double *) malloc(*nc * sizeof(double))) == NULL) {
+      #pragma omp critical
+      error("%s", myMemErr);
+    }
+  }
+
+  if ((d = (double *) malloc(*nc * sizeof(double))) == NULL) {
+    #pragma omp critical
+    error("%s", myMemErr);
+  }
+  for (i = 0; i < *nc; i++) d[i] = 0.0;
+  nsph(nc, dire, d); // polar transformation of dire
+  for (x = 0; x < *n - 1; x++) { 
+    if (id[x] == 0) id[x] = x + 1;
+    if ((mdst = (double *) malloc((*n - x - 1) * sizeof(double))) == NULL) {
+      #pragma omp critical
+      error("%s", myMemErr);
+    }
+    #pragma omp parallel for default(shared) private(xh, i, ToF) schedule(static, 1)
+    for (xh = x+1; xh < *n; xh++) {
+      for (i = *nc - 1; i >= 0; i--) {
+        h[i] = coords[*n * i + x] - coords[*n * i + xh];
+        p[i] = 0.0; // polar coordinates
+      }
+      nsph(nc, h, p); // polar transformation of h
+      ToF = 1;
+      for (i = 1; i < *nc; i++) {
+        if (!ISNAN(d[i]) && !ISNAN(p[i])) {
+          if (fabs(d[i]) != PI / 2.0) { 
+            ToF &= (p[i] >= d[i] - fabs(*tolerance));
+            ToF &= (p[i] <= d[i] + fabs(*tolerance));
+          }
+          else {
+            ToF &= (fabs(p[i]) >= PI / 2.0 - fabs(*tolerance));
+          }
+        }
+      }
+      if (ToF) {
+        mdst[xh - x - 1] = p[0];
+      }
+      else {
+        mdst[xh - x - 1] = -p[0];
+      }
+    }
+    mpos = -1;
+    for (xh = x+1; xh < *n; xh++) {
+      if (mdst[xh - x - 1] >= 0.0) {
+        mymin = mdst[xh - x - 1];
+        mpos = xh;
+        break;
+      }
+    }
+    for (xh++; xh < *n; xh++) {
+      if ((mdst[xh - x - 1] < mymin) && (mdst[xh - x - 1] >= 0.0)) {
+        mymin = mdst[xh - x - 1];
+        mpos = xh;
+      }
+    }
+    if (mpos > -1) {
+      id[mpos] = id[x];
+    }
+    free(mdst);
+  }
+
+  #pragma omp parallel
+  {
+    free(h);
+    free(p);
+  }
+  free(d);
+
+}
+
+void nsph(int *di, double *x, double *res) {
+  /* Computing polar transformation
+         *di - number of coordinates to transform
+          *x - vector of coordinates
+        *res - transformed vector */
+
+  int i, j;
+
+  res[*di - 1] = atan(x[*di - 1] / x[*di - 2]);
+  for (i = *di - 2; i >= 0; i--) {
+    for (j = *di - 1; j >= i; j--) {
+      res[i] += R_pow_di(x[j], 2);
+    }
+    res[i] = sqrt(res[i]);
+    if (i != 0) res[i] = atan(res[i] / x[j]);
+  }
+
+}
+
+void cEmbedLen(int *n, int *nc, double *coords, int *locId, int *data, int *cemoc, double *maxcens, double *tlen) {
+  /* Computing strata lengths
+          *n - sample size
+         *nc - number of columns
+     *coords - matrix of coordinates
+       *data - vector of data
+      *locId - vector of locations id
+      *cemoc - category of an embedded occurency
+    *maxcens - censured lengths
+       *tlen - lengths vector */
+
+  int i, j, inde = 0, bgn = 0;
+  double tmptl;
+
+  for (i = 1; i < *n; i++) {
+    if (locId[i - 1] == locId[i] && data[i - 1] == data[i]) {
+      tmptl = R_pow_di(coords[i - 1] - coords[i], 2);
+      for (j = 1; j < *nc; j++) {
+        tmptl += R_pow_di(coords[*n * j + i - 1] - coords[*n * j + i], 2);
+      }
+      tlen[inde] += sqrt(tmptl);
+    }
+    else {
+      if (locId[i - 1] == locId[i]) {
+        tmptl = R_pow_di(coords[i - 1] - coords[i], 2);
+        for (j = 1; j < *nc; j++) {
+          tmptl += R_pow_di(coords[*n * j + i - 1] - coords[*n * j + i], 2);
+        }
+        maxcens[inde] = sqrt(tmptl);
+      }
+      else {
+        maxcens[inde] = maxcens[inde - 1];
+        for (j = inde - 1; j > bgn; j--) {
+          maxcens[j] += maxcens[j - 1];
+          maxcens[j] /= 2.0;
+        }
+        bgn = inde + 1;
+      }
+      cemoc[inde] = data[i - 1];
+      ++inde;
+    }
+  }
+  maxcens[inde] = maxcens[inde - 1];
+  for (j = inde - 1; j > bgn; j--) {
+    maxcens[j] += maxcens[j - 1];
+    maxcens[j] /= 2.0;
+  }
+  cemoc[inde] = data[i - 1];
+  *n = ++inde;
+}
+
+void cEmbedOc(int *n, int *nc, int *nk, double *coords, int *locId, int *data, int *cemoc, double *tlen) {
+  /* Counting embedded occurences
+          *n - sample size
+         *nc - number of columns
+         *nk - number of categories
+     *coords - matrix of coordinates
+       *data - vector of data
+      *locId - vector of locations id
+      *cemoc - embedded occurences
+       *tlen - mean length vector */
+
+  int i, j;
+  double tmptl;
+
+  #pragma omp parallel sections default(shared) private(i)
+  {
+    #pragma omp section
+    {
+      ++cemoc[data[0] - 1];
+      for (i = 1; i < *n; i++) {
+        if (locId[i - 1] != locId[i] || data[i - 1] != data[i]) ++cemoc[data[i] - 1];
+      }
+    }
+    #pragma omp section
+    {
+      for (i = 1; i < *n; i++) {
+        if (locId[i - 1] == locId[i] && data[i - 1] == data[i]) {
+          tmptl = R_pow_di(coords[i - 1] - coords[i], 2);
+          for (j = 1; j < *nc; j++) {
+            tmptl += R_pow_di(coords[*n * j + i - 1] - coords[*n * j + i], 2);
+          }
+          tlen[data[i] - 1] += sqrt(tmptl);
+        }
+      }
+    }
+  }
+  #pragma omp parallel for default(shared) private(i) schedule(static, 1)
+  for (i = 0; i < *nk; i++) tlen[i] /= (double) cemoc[i];
+}
+
+void cEmbedTrans(int *n, int *nk, int *locId, int *data, int *tcount) {
+  /* Counting embedded occurences
+          *n - sample size
+         *nk - number of categories
+      *locId - vector of locations id
+       *data - vector of data
+     *tcount - transition occurences */
+
+  int i = 0;
+
+  for (; i < *n - 1; i++) {
+    if (locId[i] == locId[i + 1] && data[i] != data[i + 1]) {
+      ++tcount[data[i] - 1 + *nk * (data[i + 1] - 1)];
+    }
+  }
+
+}
+
+void embedTProbs(int *nk, double *tp) {
+  /* Counting embedded transition probabilities
+         *nk - number of categories
+         *tp - transition occurences to transform in probabilities */
+
+  int i, j;
+  double rwsum;
+
+  #pragma omp parallel for default(shared) private(i, j, rwsum) schedule(static, 1)
+  for (i = 0; i < *nk; i++) {
+    rwsum = 0.0;
+
+    for (j = 0; j < *nk; j++) {
+      rwsum += tp[i + *nk * j];
+    }
+
+    for (j = 0; j < *nk; j++) {
+      tp[i + *nk * j] /= rwsum;
+    }
+  }
+
+}
+
+void ellinter(int *nc, int *nk, double *hh, double *coef, double *Rmat) {
+  /* Ellipsoidally interpolation of transition rates matrix
+         *nc - dimension of the sample space
+         *nk - number of categories
+         *hh - vector of scaled lags
+       *coef - 'list' of estimated coefficients
+       *Rmat - interpolated matrix */
+
+  int i, j, k;
+
+  for (j = 0; j < *nk; j++) {
+    for (k = 0; k < *nk; k++) {
+      Rmat[*nk * j + k] = 0.0;
+      if (j != k) {
+        for (i = 0; i < *nc; i++) {
+          Rmat[*nk * j + k] += R_pow(coef[*nk * *nk * i + *nk * j + k] * hh[i], 2.0);
+        }
+        Rmat[*nk * j + k] = R_pow(Rmat[*nk * j + k], 0.5);
+      }
+    }
+  }
+
+}
+
+void getDst(int *nc, int *nr, double *site, double *coords, double *wgmLags) {
+  /* Differences among simulation site coordinates and dataset coordinates
+         *nc - dimension of coordinates
+         *nr - dimension of the sample space
+       *site - simulation coordinates
+     *coords - sample coordinates
+    *wgmLags - resulting lags */
+
+  int i, j;
+
+  #pragma omp parallel for default(shared) private(i, j) schedule(static, 1)
+  for (i = 0; i < *nr; i++) {
+    wgmLags[i] = coords[i] - site[0];
+    wgmLags[*nc * *nr + i] = R_pow_di(wgmLags[i], 2);
+    for (j = 1; j < *nc; j++) {
+      wgmLags[*nr * j + i] = coords[*nr * j + i] - site[j];
+      wgmLags[*nc * *nr + i] += R_pow_di(wgmLags[*nr * j + i], 2);
+    }
+    wgmLags[*nc * *nr + i] = sqrt(wgmLags[*nc * *nr + i]);
+  }
+
+}
+
+void fastMatProd(int *nr, int *ni, double *mat1, int *nc, double *mat2, double *res) {
+  /* HPC Matrix Product
+         *nr - number of rows (1st matrix)
+         *ni - number of colunms or rows (1st matrix and 2 matrix)
+       *mat1 - 1st matrix
+         *nc - number of colunms (2nd matrix)
+       *mat2 - 2nd matrix
+        *res - resulting matrix */
+
+  int i, j, k;
+
+  #pragma omp parallel for default(shared) private(i, j, k) schedule(static, 1)
+  for (i = 0; i < *nr; i++) {
+    for (j = 0; j < *nc; j++) {
+      res[*nr * j + i] = mat1[i] * mat2[*ni * j];
+      for (k = 1; k < *ni; k++) {
+        res[*nr * j + i] += mat1[*nr * k + i] * mat2[*ni * j + k];
+      }
+    }
+  }
+
+}
+
+void jointProbs(int *hmany, int *nk, int *ndata, double *Tmat, double *pProbs) {
+  /* "Posterior" transition probabilities approximation
+      *hmany - number of neighbours
+         *nk - number of categories
+  *ndata - vector of neighbour categories
+       *Tmat - array of transition probabilities
+     *pProbs - vector of probabilities */
+
+  int i, j;
+  double mysum = 0.0;
+
+  #pragma omp parallel for default(shared) private(i, j) schedule(static, 1)
+  for (j = 0; j < *nk; j++) {
+    pProbs[j] = 1.0;
+    for (i = 0; i < *hmany; i++) {
+      if (!i) {
+        pProbs[j] = pProbs[j] * Tmat[(int) R_pow_di(*nk , 2) * i + ndata[i] - 1 + *nk * j];
+      }
+      else {
+        pProbs[j] = pProbs[j] * Tmat[(int) R_pow_di(*nk , 2) * i + j + *nk * (ndata[i] - 1)];
+      }
+    }
+  }
+  for (i = 0; i < *nk; i++) {
+    mysum = mysum + pProbs[i];
+  }
+  #pragma omp parallel for default(shared) private(i) schedule(static, 1)
+  for (i = 0; i < *nk; i++) {
+    pProbs[i] /= mysum;
+  }  
+}
+
+void tsimCate(int *nk, int *n, double *prhat, int *initSim) {
+  /* Simulation from transition probabilities estimation
+         *nk - number of categories
+          *n - sample size
+      *prhat - matrix of posterior probabilities 
+    *initSim - conditional simulation vector */
+
+  int i, j;
+  double rnd;
+  
+  /* Computing the cumulative probabilities */
+  #pragma omp parallel for default(shared) private(i, j) schedule(static, 1)
+  for (i = 0; i < *n; i++) {
+    for (j = 1; j < *nk; j++) {
+      prhat[*n * j + i] += prhat[*n * (j - 1) + i];
+    }
+  }
+
+  GetRNGstate();
+  for (i = 0; i < *n; i++) {
+    rnd = unif_rand();
+    for (j = 0; j < *nk; j++) {
+      if (rnd < prhat[*n * j + i]) {
+        initSim[i] = j + 1;
+        break;
+      }
+    }
+  }
+  PutRNGstate();
+}
+
+void getNumCores(int *n) {
+  /* Get the max number of CPU cores
+          *n - num of cores */
+  #ifdef _OPENMP
+    *n = omp_get_num_procs();
+  #else
+    *n = 1;
+  #endif
+}
+
+void getNumSlaves(int *n) {
+  /* Get the number of threads to use
+          *n - num of threads */
+  #ifdef _OPENMP
+    #pragma omp parallel default(shared)
+    {
+      #pragma omp master
+        *n = omp_get_num_threads();
+    }
+  #else
+    *n = 1;
+  #endif
+}
+
+void setNumSlaves(int *n) {
+  /* Set the number of threads to use
+          *n - num of threads */
+  #ifdef _OPENMP
+    if (omp_get_num_procs() < *n) {
+      *n = omp_get_num_procs();
+      omp_set_num_threads(*n);
+    }
+    else if(*n > 0) {
+      omp_set_num_threads(*n);
+    }
+    else {
+      omp_set_num_threads(1);
+      *n = 1;
+    }
+  #else
+    *n = 0;
+  #endif
+}
+
+void fastSVDprod(double *vti, double *di, double *ui, int *nc) {
+  /* HPC of SVD product
+       *vti - matrix whose rows contain the right singular vectors
+        *di - vector of singular values
+        *ui - matrix whose columns contain the left singular vectors
+        *nc - number of columns */
+
+  int i, j, k;
+  double *myprod;
+  
+  if ((myprod = (double *) malloc(*nc * *nc * sizeof(double))) == NULL) {
+    #pragma omp critical
+    error("%s", myMemErr);
+  }
+
+  #pragma omp parallel for default(shared) private(i, j, k) schedule(static, 1)
+  for (i = 0; i < *nc; i++) {
+    for (j = 0; j < *nc; j++) {
+      vti[*nc * j + i] *= di[j];
+    }
+    for (j = 0; j < *nc; j++) {
+      myprod[*nc * j + i] = 0.0;
+      for (k = 0; k < *nc; k++) 
+        myprod[*nc * j + i] += vti[*nc * k + i] * ui[*nc * j + k];
+    }
+  }
+  memcpy(ui, myprod, *nc * *nc * sizeof(double));
+  free(myprod);
+}
+
+SEXP annealingSIM(SEXP maxIt, SEXP old, SEXP x, SEXP grid, SEXP expr, SEXP rho) {
+  /* Perform the simulated annealing to optimize the simulation
+       maxIt - maximum number of iteration
+         old - simulated field to optimize
+           x - model to simulate
+        grid - simulation grid
+        expr - function to optimize
+         rho - R enviroment */
+
+  SEXP new, res, prob;
+  int i, j, k, hhmm, n, m, nk, ris;
+  int *iold, *inew, *xx, *yy, *ctrlvet;
+  double *pvet;
+  
+  PROTECT(old = coerceVector(old, INTSXP));
+  PROTECT(maxIt = coerceVector(maxIt, INTSXP));
+  n = length(old);
+  iold = INTEGER(old);
+  PROTECT(new = allocVector(INTSXP, n));
+  inew = INTEGER(new);
+  PROTECT(res = allocVector(REALSXP, 2));
+  defineVar(install("x"), x, rho);
+  defineVar(install("grid"), grid, rho);
+  for (i = 0; i < length(x); i++) {
+    if(strcmp(CHAR(STRING_ELT(getAttrib(x, R_NamesSymbol), i)), "prop") == 0) {
+      prob = VECTOR_ELT(x, i);
+      break;
+    }
+  }
+  nk = length(prob);
+  if ((xx = (int *) malloc(n * sizeof(int))) == NULL) {
+    #pragma omp critical
+    error("%s", myMemErr);
+  }
+  if ((ctrlvet = (int *) malloc(nk * sizeof(int))) == NULL) {
+    #pragma omp critical
+    error("%s", myMemErr);
+  }
+  if ((pvet = (double *) malloc(nk * sizeof(double))) == NULL) {
+    #pragma omp critical
+    error("%s", myMemErr);
+  }
+
+  pvet[0] = REAL(prob)[0];
+  for (i = 1; i < nk; i++) {
+    pvet[i] = pvet[i - 1] + REAL(prob)[i];
+  }
+  GetRNGstate();
+
+  for (i = 0; i < INTEGER(maxIt)[0]; i++) {
+    ris = 0;
+    hhmm = (int) ceil(n * unif_rand());
+    /* set a similar sample into the "new" vector */
+    while (ris == 0) {
+      if ((yy = (int *) malloc(hhmm * sizeof(int))) == NULL) {
+        #pragma omp critical
+        error("%s", myMemErr);
+      } // points to replace
+      #pragma omp parallel for default(shared) private(j) schedule(static, 1)
+      for (j = 0; j < n; j++) {
+        xx[j] = j;
+        inew[j] = iold[j];
+      }
+      m = n;
+      for (j = 0; j < hhmm; j++) {
+        k = (int) floor(m * unif_rand());
+        yy[j] = xx[k];
+        xx[k] = xx[--m];
+      }
+      for (k = 0; k < hhmm; k++) {
+        for (j = 0; j < nk; j++) if (unif_rand() <= pvet[j]) {
+          inew[yy[k]] = j + 1;
+          break;
+        }
+      }
+      free(yy);
+      /* verify a sub-optimality condition */
+      for(j = 0; j < nk; j++) ctrlvet[j] = 0;
+      for(j = 0; j < n; j++) ctrlvet[inew[j] - 1] += 1;
+      ris = 1;
+      for(j = 0; j < nk; j++) if(ctrlvet[j] == 0) ris = 0;
+    }
+
+    defineVar(install("pp"), old, rho);
+    REAL(res)[0] = REAL(eval(expr, rho))[0];
+    defineVar(install("pp"), new, rho);
+    REAL(res)[1] = REAL(eval(expr, rho))[0];
+
+    if (REAL(res)[1] <= REAL(res)[0]) {
+      #pragma omp parallel for default(shared) private(j) schedule(static, 1)
+      for (j = 0; j < n; j++) iold[j] = inew[j];
+    }
+    else {
+      if (unif_rand() < exp(- (REAL(res)[1] - REAL(res)[0]) / (i + 1.0))) {
+        #pragma omp parallel for default(shared) private(j) schedule(static, 1)
+        for (j = 0; j < n; j++) iold[j] = inew[j];
+      }
+    }
+  }
+
+  PutRNGstate();
+  free(xx);
+  free(pvet);
+  free(ctrlvet);
+  UNPROTECT(4);
+  return(old);
+}
+
+SEXP geneticSIM(SEXP maxIt, SEXP old, SEXP x, SEXP grid, SEXP expr, SEXP rho) {
+  /* Perform the genetic algorithm to optimize the simulation
+       maxIt - maximum number of iteration
+         old - simulated field to optimize
+           x - model to simulate
+        grid - simulation grid
+        expr - function to optimize
+         rho - R enviroment */
+
+  SEXP new, res, prob, child0, child1;
+  int i, j, k, hhmm, n, m, nk, ris, pri, pos = 0;
+  int *iold, *inew, *xx, *yy, *ctrlvet, *tmpc;
+  double tmp;
+  double *pvet;
+  
+  PROTECT(old = coerceVector(old, INTSXP));
+  PROTECT(maxIt = coerceVector(maxIt, INTSXP));
+  n = length(old);
+  iold = INTEGER(old);
+  PROTECT(new = allocVector(INTSXP, n));
+  inew = INTEGER(new);
+  PROTECT(child0 = allocVector(INTSXP, n));
+  PROTECT(child1 = allocVector(INTSXP, n));
+  PROTECT(res = allocVector(REALSXP, 4));
+  defineVar(install("x"), x, rho);
+  defineVar(install("grid"), grid, rho);
+  for (i = 0; i < length(x); i++) {
+    if(strcmp(CHAR(STRING_ELT(getAttrib(x, R_NamesSymbol), i)), "prop") == 0) {
+      prob = VECTOR_ELT(x, i);
+      break;
+    }
+  }
+  nk = length(prob);
+  if ((xx = (int *) malloc(n * sizeof(int))) == NULL) {
+    #pragma omp critical
+    error("%s", myMemErr);
+  }
+  if ((tmpc = (int *) malloc(n * sizeof(int))) == NULL) {
+    #pragma omp critical
+    error("%s", myMemErr);
+  }
+  if ((ctrlvet = (int *) malloc(nk * sizeof(int))) == NULL) {
+    #pragma omp critical
+    error("%s", myMemErr);
+  }
+  if ((pvet = (double *) malloc(nk * sizeof(double))) == NULL) {
+    #pragma omp critical
+    error("%s", myMemErr);
+  }
+  pvet[0] = REAL(prob)[0];
+  for (i = 1; i < nk; i++) {
+    pvet[i] = pvet[i - 1] + REAL(prob)[i];
+  }
+  GetRNGstate();
+
+  for (i = 0; i < INTEGER(maxIt)[0]; i++) {
+    ris = 0;
+    hhmm = (int) ceil(n * unif_rand());
+    /* set a similar sample into the "new" vector - Surviver Mutation */
+    while (ris == 0) {
+      if ((yy = (int *) malloc(hhmm * sizeof(int))) == NULL) {
+        #pragma omp critical
+        error("%s", myMemErr);
+      } // points to replace
+      #pragma omp parallel for default(shared) private(j) schedule(static, 1)
+      for (j = 0; j < n; j++) {
+        xx[j] = j;
+        inew[j] = iold[j];
+      }
+      m = n;
+      for (j = 0; j < hhmm; j++) {
+        k = (int) floor(m * unif_rand());
+        yy[j] = xx[k];
+        xx[k] = xx[--m];
+      }
+      for (k = 0; k < hhmm; k++) {
+        for (j = 0; j < nk; j++) if (unif_rand() <= pvet[j]) {
+          inew[yy[k]] = j + 1;
+          break;
+        }
+      }
+      free(yy);
+      /* verify a sub-optimality condition */
+      for(j = 0; j < nk; j++) ctrlvet[j] = 0;
+      for(j = 0; j < n; j++) ctrlvet[inew[j] - 1] += 1;
+      ris = 1;
+      for(j = 0; j < nk; j++) if(ctrlvet[j] == 0) ris = 0;
+    }
+    /* Crossover */
+    for (j = 0; j < n; j++) {
+      if (unif_rand() > 0.5) {
+        INTEGER(child0)[j] = inew[j];
+        INTEGER(child1)[j] = iold[j];
+      }
+      else {
+        INTEGER(child0)[j] = iold[j];
+        INTEGER(child1)[j] = inew[j];
+      }
+    }
+
+    /* Check for the the child0 */
+    pri = 0;
+    #pragma omp parallel for default(shared) private(j) schedule(static, 1)
+    for (j = 0; j < n; j++) tmpc[j] = INTEGER(child0)[j];
+    for (j = 0; j < nk; j++) ctrlvet[j] = 0;
+    for (j = 0; j < n; j++) ctrlvet[tmpc[j] - 1] += 1;
+    ris = 1;
+    for (j = 0; j < nk; j++) if(ctrlvet[j] == 0) ris = 0;
+    while (ris == 0) {
+      if ((yy = (int *) malloc(hhmm * sizeof(int))) == NULL) {
+        #pragma omp critical
+        error("%s", myMemErr);
+      } // points to replace
+      #pragma omp parallel for default(shared) private(j) schedule(static, 1)
+      for (j = 0; j < n; j++) {
+        xx[j] = j;
+        if (pri) tmpc[j] = INTEGER(child0)[j];
+      }
+      if (pri == 0) pri = !pri;
+      m = n;
+      for (j = 0; j < hhmm; j++) {
+        k = (int) floor(m * unif_rand());
+        yy[j] = xx[k];
+        xx[k] = xx[--m];
+      }
+      for (k = 0; k < hhmm; k++) {
+        for (j = 0; j < nk; j++) if (unif_rand() <= pvet[j]) {
+          tmpc[yy[k]] = j + 1;
+          break;
+        }
+      }
+      free(yy);
+      /* verify a sub-optimality condition */
+      for(j = 0; j < nk; j++) ctrlvet[j] = 0;
+      for(j = 0; j < n; j++) ctrlvet[tmpc[j] - 1] += 1;
+      ris = 1;
+      for(j = 0; j < nk; j++) if(ctrlvet[j] == 0) ris = 0;
+    }
+    #pragma omp parallel for default(shared) private(j) schedule(static, 1)
+    for (j = 0; j < n; j++) INTEGER(child0)[j] = tmpc[j];
+
+    /* Check for the the child1 */    
+    pri = 0;
+    #pragma omp parallel for default(shared) private(j) schedule(static, 1)
+    for (j = 0; j < n; j++) tmpc[j] = INTEGER(child1)[j];
+    for (j = 0; j < nk; j++) ctrlvet[j] = 0;
+    for (j = 0; j < n; j++) ctrlvet[tmpc[j] - 1] += 1;
+    ris = 1;
+    for (j = 0; j < nk; j++) if(ctrlvet[j] == 0) ris = 0;
+    while (ris == 0) {
+      if ((yy = (int *) malloc(hhmm * sizeof(int))) == NULL) {
+        #pragma omp critical
+        error("%s", myMemErr);
+      } // points to replace
+      #pragma omp parallel for default(shared) private(j) schedule(static, 1)
+      for (j = 0; j < n; j++) {
+        xx[j] = j;
+        if (pri) tmpc[j] = INTEGER(child1)[j];
+      }
+      if (pri == 0) pri = !pri;
+      m = n;
+      for (j = 0; j < hhmm; j++) {
+        k = (int) floor(m * unif_rand());
+        yy[j] = xx[k];
+        xx[k] = xx[--m];
+      }
+      for (k = 0; k < hhmm; k++) {
+        for (j = 0; j < nk; j++) if (unif_rand() <= pvet[j]) {
+          tmpc[yy[k]] = j + 1;
+          break;
+        }
+      }
+      free(yy);
+      /* verify a sub-optimality condition */
+      for(j = 0; j < nk; j++) ctrlvet[j] = 0;
+      for(j = 0; j < n; j++) ctrlvet[tmpc[j] - 1] += 1;
+      ris = 1;
+      for(j = 0; j < nk; j++) if(ctrlvet[j] == 0) ris = 0;
+    }
+    #pragma omp parallel for default(shared) private(j) schedule(static, 1)
+    for (j = 0; j < n; j++) INTEGER(child1)[j] = tmpc[j];
+
+    defineVar(install("pp"), old, rho);
+    REAL(res)[0] = REAL(eval(expr, rho))[0];
+    defineVar(install("pp"), new, rho);
+    REAL(res)[1] = REAL(eval(expr, rho))[0];
+    defineVar(install("pp"), child0, rho);
+    REAL(res)[2] = REAL(eval(expr, rho))[0];
+    defineVar(install("pp"), child1, rho);
+    REAL(res)[3] = REAL(eval(expr, rho))[0];
+    
+    tmp = R_PosInf;
+    for (j = 0; j < 4; j++) {
+      if (REAL(res)[j] < tmp) {
+          pos = j;
+          tmp = REAL(res)[j];
+      }
+    }
+    switch(pos) {
+      case 1:
+        #pragma omp parallel for default(shared) private(j) schedule(static, 1)
+        for (j = 0; j < n; j++) iold[j] = inew[j];
+        break;
+      case 2:
+        #pragma omp parallel for default(shared) private(j) schedule(static, 1)
+        for (j = 0; j < n; j++) iold[j] = INTEGER(child0)[j];
+        break;
+      case 3:
+        #pragma omp parallel for default(shared) private(j) schedule(static, 1)
+        for (j = 0; j < n; j++) iold[j] = INTEGER(child1)[j];
+        break;
+      default:
+        break;
+    }
+  }
+
+  PutRNGstate();
+  free(xx);
+  free(pvet);
+  free(ctrlvet);
+  free(tmpc);
+  UNPROTECT(6);
+  return(old);
+}
+
+void expmat(double *x, int *n, double *z) {
+  /* Compute the exponential matrix by performing the 'Scaling & Squaring' algorithm
+       *x - input matrix
+       *n - number of rows (or columns)
+       *z - output matrix */
+
+  int h, i, j, k, l, info = 0;
+  int *ipiv;
+  double s;
+  double *nx, *x2, *x4, *x6, *pm, *um, *vm, *tmp;
+  double t[] = {0.015, 0.25, 0.95, 2.1};
+  double cm[] = {120.0, 30240.0, 17297280.0, 17643225600.0, \
+                  60.0, 15120.0,  8648640.0,  8821612800.0, \
+                  12.0,  3360.0,  1995840.0,  2075673600.0, \
+                   1.0,   420.0,   277200.0,   302702400.0, \
+                   0.0,    30.0,    25200.0,    30270240.0, \
+                   0.0,     1.0,     1512.0,     2162160.0, \
+                   0.0,     0.0,       56.0,      110880.0, \
+                   0.0,     0.0,        1.0,        3960.0, \
+                   0.0,     0.0,        0.0,          90.0, \
+                   0.0,     0.0,        0.0,           1.0};
+  double cv[] = {64764752532480000.0, 32382376266240000.0, 7771770303897600.0, \
+                 1187353796428800.0, 129060195264000.0, 10559470521600.0, \
+                 670442572800.0, 33522128640.0, 1323241920.0, 40840800.0, \
+                 960960.0, 16380.0, 182.0, 1.0};
+  
+  if (*n <= 1) {
+    *z = exp(*x);
+  }
+  else {
+    if ((nx = (double *) malloc(*n * sizeof(double))) == NULL) {
+      #pragma omp critical
+      error("%s", myMemErr);
+    }
+    if ((x2 = (double *) malloc(*n * *n * sizeof(double))) == NULL) {
+      #pragma omp critical
+      error("%s", myMemErr);
+    }
+    if ((ipiv = (int *) malloc(*n * sizeof(int))) == NULL) {
+      #pragma omp critical
+      error("%s", myMemErr);
+    }
+    if ((tmp = (double *) malloc(*n * *n * sizeof(double))) == NULL) {
+      #pragma omp critical
+      error("%s", myMemErr);
+    }
+    if ((pm = (double *) malloc(*n * *n * sizeof(double))) == NULL) {
+      #pragma omp critical
+      error("%s", myMemErr);
+    }
+    if ((um = (double *) malloc(*n * *n * sizeof(double))) == NULL) {
+      #pragma omp critical
+      error("%s", myMemErr);
+    }
+    if ((vm = (double *) malloc(*n * *n * sizeof(double))) == NULL) {
+      #pragma omp critical
+      error("%s", myMemErr);
+    }
+
+    for (i = 0; i < *n; i++) {
+      nx[i] = 0.0;
+      for (j = 0; j < *n; j++) {
+        nx[i] += fabs(x[*n * i + j]);
+      }
+    }
+    R_rsort(nx, *n);
+    if (nx[*n - 1] <= 2.1) {
+      for (l = 0; l < 4; l++) {
+        if (nx[*n - 1] <= t[l]) break;
+      }
+      for (i = 0; i < *n; i++) {
+        for (j = 0; j < *n; j++) {
+          x2[*n * i + j] = 0.0;
+          for (k = 0; k < *n; k++) {
+            x2[*n * i + j] += x[*n * i + k] * x[*n * k + j];
+          }
+        }
+      }
+      memcpy(pm, x2, sizeof(double) * *n * *n);
+      for (i = 0; i < *n; i++) {
+        um[*n * i + i] = cm[4 + l];
+        vm[*n * i + i] = cm[l];
+        for (j = 0; j < *n; j++) {
+          if (i != j) {
+            um[*n * i + j] = 0.0;
+            vm[*n * i + j] = 0.0;
+          }
+        }
+      }
+      for (k = 1; k <= l; k++) {
+        for (i = 0; i < *n; i++) {
+          for (j = 0; j < *n; j++) {
+            um[*n * j + i] += cm[l + 4 * ((2 * k) + 1)] * pm[*n * j + i];
+            vm[*n * j + i] += cm[l + 8 * k] * pm[*n * j + i];
+          }
+        }
+        if (k == l) break;
+        for (i = 0; i < *n; i++) {
+          for (j = 0; j < *n; j++) {
+            tmp[*n * i + j] = 0.0;
+            for (h = 0; h < *n; h++) {
+              tmp[*n * i + j] += pm[*n * i + h] * x2[*n * h + j];
+            }
+          }
+        }
+        memcpy(pm, tmp, sizeof(double) * *n * *n);
+      }
+      for (i = 0; i < *n; i++) {
+        for (j = 0; j < *n; j++) {
+          x2[*n * i + j] = 0.0;
+          for (h = 0; h < *n; h++) {
+            x2[*n * i + j] += x[*n * i + h] * um[*n * h + j];
+          }
+        }
+      }
+      for (i = 0; i < (*n * *n); i++) {
+        um[i] = vm[i] - x2[i];
+        vm[i] += x2[i];
+      }
+      F77_CALL(dgesv)(n, n, um, n, ipiv, vm, n, &info); 
+      if (info > 0) {
+        for (i = 0; i < *n * *n; i++) {
+          vm[i] = R_NaN;
+        }
+      }
+      memcpy(z, vm, sizeof(double) * *n * *n);
+      free(vm);
+    }
+    else {
+      free(vm);
+      if ((x4 = (double *) malloc(*n * *n * sizeof(double))) == NULL) {
+        #pragma omp critical
+        error("%s", myMemErr);
+      }
+      if ((x6 = (double *) malloc(*n * *n * sizeof(double))) == NULL) {
+        #pragma omp critical
+        error("%s", myMemErr);
+      }
+      s = log(nx[*n - 1] / 5.4) / log(2.0);
+      if (s > 0.0) {
+            s = ceil(s);
+            for (i = 0; i < *n * *n; i++) x[i] /= R_pow(2.0, s);
+      }
+      for (i = 0; i < *n; i++) {
+        for (j = 0; j < *n; j++) {
+          x2[*n * i + j] = 0.0;
+          for (k = 0; k < *n; k++) {
+            x2[*n * i + j] += x[*n * i + k] * x[*n * k + j];
+          }
+        }
+      }
+      for (i = 0; i < *n; i++) {
+        for (j = 0; j < *n; j++) {
+          x4[*n * i + j] = 0.0;
+          for (k = 0; k < *n; k++) {
+            x4[*n * i + j] += x2[*n * i + k] * x2[*n * k + j];
+          }
+        }
+      }
+      for (i = 0; i < *n; i++) {
+        for (j = 0; j < *n; j++) {
+          x6[*n * i + j] = 0.0;
+          for (k = 0; k < *n; k++) {
+            x6[*n * i + j] += x2[*n * i + k] * x4[*n * k + j];
+          }
+        }
+      }
+      for (i = 0; i < *n * *n; i++) {
+        tmp[i] = cv[13] * x6[i] + cv[11] * x4[i] + cv[9] * x2[i];
+      }
+      for (i = 0; i < *n; i++) {
+        for (j = 0; j < *n; j++) {
+          pm[*n * i + j] = 0.0;
+          for (k = 0; k < *n; k++) {
+            pm[*n * i + j] += x6[*n * i + k] * tmp[*n * k + j];
+          }
+        }
+      }
+      for (i = 0; i < *n * *n; i++) {
+        tmp[i] = pm[i] + cv[7] * x6[i] + cv[5] * x4[i] + cv[3] * x2[i];
+      }
+      for(i = 0; i < *n; i++) tmp[*n * i + i] += cv[1];
+      for (i = 0; i < *n; i++) {
+        for (j = 0; j < *n; j++) {
+          um[*n * i + j] = 0.0;
+          for (k = 0; k < *n; k++) {
+            um[*n * i + j] += x[*n * i + k] * tmp[*n * k + j];
+          }
+        }
+      }
+      for (i = 0; i < *n * *n; i++) {
+        tmp[i] = cv[12] * x6[i] + cv[10] * x4[i] + cv[8] * x2[i];
+      }
+      for (i = 0; i < *n; i++) {
+        for (j = 0; j < *n; j++) {
+          pm[*n * i + j] = 0.0;
+          for (k = 0; k < *n; k++) {
+            pm[*n * i + j] += x6[*n * i + k] * tmp[*n * k + j];
+          }
+        }
+      }
+      for (i = 0; i < *n * *n; i++) {
+        tmp[i] = pm[i] + cv[6] * x6[i] + cv[4] * x4[i] + cv[2] * x2[i];
+      }
+      for(i = 0; i < *n; i++) tmp[*n * i + i] += cv[0];
+      for (i = 0; i < (*n * *n); i++) {
+        pm[i] = tmp[i] - um[i];
+        tmp[i] += um[i];
+      }
+      F77_CALL(dgesv)(n, n, pm, n, ipiv, tmp, n, &info);
+      if (info > 0) {
+        for (i = 0; i < *n * *n; i++) {
+          tmp[i] = R_NaN;
+        }
+      }
+      memcpy(z, tmp, sizeof(double) * *n * *n);
+      if (s > 0) {
+        for (h = 0; h < s; h++) {
+          for (i = 0; i < *n; i++) {
+            for (j = 0; j < *n; j++) {
+              x[*n * i + j] = 0.0;
+              for (k = 0; k < *n; k++) {
+                x[*n * i + j] += z[*n * i + k] * z[*n * k + j];
+              }
+            }
+          }
+          memcpy(z, x, sizeof(double) * *n * *n);
+        }
+      }
+      free(x4);
+      free(x6);
+    }
+    free(nx);
+    free(x2);
+    free(ipiv);
+    free(tmp);
+    free(pm);
+    free(um);
+  }
+}
+
+void predTPFIT(double *coefficients, double *prop, double *lags, int *mydim, double *mypred) {
+  /* Compute transition probability matrices for a 1D model
+       *coefficients - matrix of coefficients
+               *prop - vector of proportions
+               *lags - vector of 1D lags
+              *mydim - dimension of *mypred
+             *mypred - transition probability matrices */
+
+  int i, j;
+  double *mycoef, *dgcoef, *tmpdcf;
+  
+  if ((mycoef = (double *) malloc(mydim[0] * mydim[1] * sizeof(double))) == NULL) {
+    #pragma omp critical
+    error("%s", myMemErr);
+  }
+  if ((dgcoef = (double *) malloc(mydim[0] * sizeof(double))) == NULL) {
+    #pragma omp critical
+    error("%s", myMemErr);
+  }
+  if ((tmpdcf = (double *) malloc(mydim[0] * sizeof(double))) == NULL) {
+    #pragma omp critical
+    error("%s", myMemErr);
+  }
+    
+  #pragma omp parallel for default(shared) private(i, j) schedule(static, 1)
+  for (i = 0; i < mydim[0]; i++) {
+    for (j = 0; j < mydim[0]; j++) {
+      mycoef[i * mydim[0] + j] = (prop[i] / prop[j]) * coefficients[j * mydim[0] + i];
+    }
+  }
+  #pragma omp parallel for default(shared) private(i, j) schedule(static, 1)
+  for (i = 0; i < mydim[0]; i++) {
+    dgcoef[i] = mycoef[i * mydim[0] + i];
+    mycoef[i * mydim[0] + i] = 0.0;
+    tmpdcf[i] = mycoef[i];
+    for (j = 1; j < mydim[0]; j++) tmpdcf[i] += mycoef[j * mydim[0] + i];
+    tmpdcf[i] = (-dgcoef[i]) / tmpdcf[i];
+  }
+  #pragma omp parallel for default(shared) private(i, j) schedule(static, 1)
+  for (i = 0; i < mydim[0]; i++) {
+    for (j = 0; j < mydim[0]; j++) {
+      mycoef[i * mydim[0] + j] *= tmpdcf[j];
+    }
+  }
+  #pragma omp parallel for default(shared) private(i) schedule(static, 1)
+  for (i = 0; i < mydim[0]; i++) mycoef[i * mydim[0] + i] = dgcoef[i];
+
+  free(tmpdcf);
+  free(dgcoef);
+
+  #pragma omp parallel shared(mydim, myMemErr)
+  {
+    if ((h = (double *) malloc(mydim[0] * mydim[1] * sizeof(double))) == NULL) {
+      #pragma omp critical
+      error("%s", myMemErr);
+    }
+  }
+
+  #pragma omp parallel for default(shared) private(i, j) schedule(static, 1)
+  for (i = 0; i < mydim[2]; i++) {
+    if (lags[i] < 0.0) {
+      memcpy(h, mycoef, sizeof(double) * mydim[0] * mydim[1]);
+    }
+    else {
+      memcpy(h, coefficients, sizeof(double) * mydim[0] * mydim[1]);
+    }
+    for (j = 0; j < mydim[0] * mydim[1]; j++) h[j] *= fabs(lags[i]);
+    expmat(h, mydim, &mypred[i * mydim[0] * mydim[1]]);
+    nrmPrMat(&mypred[i * mydim[0] * mydim[1]], mydim);
+  }
+
+  #pragma omp parallel 
+  {
+    free(h);
+  }
+  free(mycoef);
+}
+
+void nrmPrMat(double *x, int *n) {
+  /* Normalization of a probability matrix
+       *x - probability matrix
+       *n - number of rows (or columns) */
+
+  int i = 0, j;
+  double *sm;
+
+  if ((sm = (double *) malloc(*n * sizeof(double))) == NULL) {
+    #pragma omp critical
+    error("%s", myMemErr);
+  }
+
+  for (; i < *n; i++) {
+    sm[i] = x[i];
+    for (j = 1; j < *n; j++) {
+       sm[i] += x[*n * j + i];
+    }
+  }
+
+  for (i = 0; i < *n; i++) {
+    for (j = 0; j < *n; j++) {
+       x[*n * j + i] /= sm[i];
+    }
+  }
+
+  free(sm);
+}
+
+void revCoef(double *coefficients, double *prop, int *nk, double *mycoef) {
+  /* Compute coefficients for the opposite direction
+       *coefficients - matrix of transition rates
+               *prop - vector of proportions
+                 *nk - number of categories
+             *mycoef - resulting matrix coefficients */
+
+  int i, j;
+  double *dgcoef, *tmpdcf;
+
+  if ((dgcoef = (double *) malloc(*nk * sizeof(double))) == NULL) {
+    #pragma omp critical
+    error("%s", myMemErr);
+  }
+  if ((tmpdcf = (double *) malloc(*nk * sizeof(double))) == NULL) {
+    #pragma omp critical
+    error("%s", myMemErr);
+  }
+
+    
+  for (i = 0; i < *nk; i++) {
+    for (j = 0; j < *nk; j++) {
+      mycoef[i * *nk + j] = (prop[i] / prop[j]) * coefficients[*nk * j + i];
+    }
+  }
+  for (i = 0; i < *nk; i++) {
+    dgcoef[i] = mycoef[(*nk + 1) * i];
+    mycoef[(*nk + 1) * i] = 0.0;
+    tmpdcf[i] = mycoef[i];
+    for (j = 1; j < *nk; j++) tmpdcf[i] += mycoef[*nk * j + i];
+    tmpdcf[i] = (-dgcoef[i]) / tmpdcf[i];
+  }
+  for (i = 0; i < *nk; i++) {
+    for (j = 0; j < *nk; j++) {
+      mycoef[*nk * i + j] *= tmpdcf[j];
+    }
+  }
+  for (i = 0; i < *nk; i++) mycoef[(*nk + 1) * i] = dgcoef[i];
+
+  free(tmpdcf);
+  free(dgcoef);
+}
+
+void predVET(double *coefficients, double *revcoef, int *nk, int *nc, double *lag, double *pred) {
+  /* Compute transition probability matrices for a given multidimensional model
+       *coefficients - matrices of coefficients
+            *revcoef - matrices of coefficients for opposite direction
+                 *nk - number of categories
+                 *nc - sample space dimension
+                *lag - lag vector
+               *pred - transition probability matrix */
+
+  int i, j;
+  double dst, summe;
+  double *MRMat, *RMat, *tmplag;
+
+  dst = R_pow(lag[0], 2.0);
+  for (i = 1; i < *nc; i++) dst += R_pow(lag[i], 2.0);
+  dst = R_pow(dst, 0.5);
+  if (dst == 0.0) {
+    for (i = 0; i < *nk; i++) {
+      for (j = 0; j < *nk; j++) {
+        pred[*nk * j + i] = 0.0;
+      }
+      ++pred[(*nk + 1) * i];
+    }
+  }
+  else {
+    if ((MRMat = (double *) malloc(*nc * *nk * *nk * sizeof(double))) == NULL) {
+      #pragma omp critical
+      error("%s", myMemErr);
+    }
+    if ((RMat = (double *) malloc(*nk * *nk * sizeof(double))) == NULL) {
+      #pragma omp critical
+      error("%s", myMemErr);
+    }
+    if ((tmplag = (double *) malloc(*nc * sizeof(double))) == NULL) {
+      #pragma omp critical
+      error("%s", myMemErr);
+    }
+
+    for (i = 0; i < *nc; i++) {
+      tmplag[i] = lag[i] / dst;
+      if (ISNAN(tmplag[i])) tmplag[i] = 0.0;
+      if (lag[i] < 0.0) {
+        memcpy(&MRMat[*nk * *nk * i], &revcoef[*nk * *nk * i], *nk * *nk * sizeof(double));
+      }
+      else {
+        memcpy(&MRMat[*nk * *nk * i], &coefficients[*nk * *nk * i], *nk * *nk * sizeof(double));
+      }
+    }
+    ellinter(nc, nk, tmplag, MRMat, RMat);
+
+    free(MRMat);
+    free(tmplag);
+
+    for (i = 0; i < *nk; i++) {
+      summe = RMat[i];
+      for (j = 1; j < *nk; j++) {
+        summe += RMat[*nk * j + i];
+      }
+      RMat[(*nk + 1) * i] -= summe;
+      RMat[i] *= dst;
+      for (j = 1; j < *nk; j++) {
+        RMat[*nk * j + i] *= dst;
+      }
+    }
+    expmat(RMat, nk, pred);
+    nrmPrMat(pred, nk);
+
+    free(RMat);  
+  }
+}
+
+void predMULTI(double *coefficients, double *prop, double *lags, int *nk, int *nc, int *nr, double *mypred) {
+  /* Compute transition probability matrices for a given multidimensional model by HPC applied to each lag vector
+       *coefficients - matrices of coefficients
+               *prop - vector of proportions
+               *lags - matrix whose columns are lags
+                 *nk - number of categories
+                 *nc - sample space dimension
+                 *nr - number of lags
+             *mypred - transition probability matrices */
+
+  int i;
+  double *mycoef;
+
+  if ((mycoef = (double *) malloc(*nk * *nk * *nc * sizeof(double))) == NULL) {
+    #pragma omp critical
+    error("%s", myMemErr);
+  }
+
+
+  #pragma omp parallel for default(shared) private(i) schedule(static, 1)
+  for (i = 0; i < *nc; i++) {
+    revCoef(&coefficients[*nk * *nk * i], prop, nk, &mycoef[*nk * *nk * i]);
+  }
+  #pragma omp parallel for default(shared) private(i) schedule(static, 1)
+  for (i = 0; i < *nr; i++) {
+    predVET(coefficients, mycoef, nk, nc, &lags[*nc * i], &mypred[*nk * *nk * i]);
+  }
+
+  free(mycoef);
+}
+
+void wd(double *lags, int *nc, int *nr, int *res) {
+  /* Find points with the same direction 
+       *lags - matrix whose columns are lags
+         *nc - sample space dimension
+         *nr - number of lags
+        *res - location id */
+
+  int i, j, k, ToF;
+  double *plags;
+
+  if ((plags = (double *) malloc(*nr * *nc * sizeof(double))) == NULL) {
+    #pragma omp critical
+    error("%s", myMemErr);
+  }
+
+
+  #pragma omp parallel for default(shared) private(i, j) schedule(static, 1)
+  for (i = 0; i < *nr; i++) {
+    for (j = 0; j < *nc; j++) plags[*nc * i + j] = 0.0;
+    nsph(nc, &lags[*nc * i], &plags[*nc * i]);
+  }
+  for (i = 0; i < *nr - 1; i++) {
+    if (res[i] == 0) {
+      res[i] = i + 1;
+      #pragma omp parallel for default(shared) private(j, k, ToF) schedule(static, 1)
+      for (j = i + 1; j < *nr; j++) {
+        if (res[j] == 0) {
+          ToF = 1;
+          for (k = 1; k < *nc; k++) {
+            if (!ISNAN(plags[*nc * i + k]) && !ISNAN(plags[*nc * j + k])) {
+              ToF &= (plags[*nc * i + k] == plags[*nc * j + k]);
+            }
+            else {
+              if(!ISNAN(plags[*nc * i + k]) || !ISNAN(plags[*nc * j + k])) ToF = 0;
+            }
+          }
+          if (ToF) {
+            res[j] = i + 1;
+          }
+        }
+      }
+    }
+  }
+  if (res[*nr - 1] == 0) res[*nr - 1] = *nr;
+  free(plags);
+}
+
+void predPSEUDOVET(double *coefficients, double *revcoef, int *nk, int *nc, int *whichd, double *lag, double *pred) {
+  /* Compute transition probability matrices for a given multidimensional model
+       *coefficients - matrices of coefficients
+            *revcoef - matrices of coefficients for opposite direction
+                 *nk - number of categories
+                 *nc - sample space dimension
+                *lag - lag vector
+               *pred - transition probability matrix */
+
+  int i, j;
+  double dst, summe;
+  double *RMat;
+  
+  if (ISNAN(*coefficients)) {
+    memcpy(pred, coefficients, *nk * *nk * sizeof(double));
+  }
+  else {
+    dst = R_pow(lag[0], 2.0);
+    for (i = 1; i < *nc; i++) dst += R_pow(lag[i], 2.0);
+    dst = R_pow(dst, 0.5);
+    if (dst == 0.0) {
+      for (i = 0; i < *nk; i++) {
+        for (j = 0; j < *nk; j++) {
+          pred[*nk * j + i] = 0.0;
+        }
+        ++pred[(*nk + 1) * i];
+      }
+    }
+    else {
+      if ((RMat = (double *) malloc(*nk * *nk * sizeof(double))) == NULL) {
+        #pragma omp critical
+        error("%s", myMemErr);
+      }
+
+      if (lag[*whichd - 1] < 0.0) {
+        memcpy(RMat, revcoef, *nk * *nk * sizeof(double));
+      }
+      else {
+        memcpy(RMat, coefficients, *nk * *nk * sizeof(double));
+      }
+
+      for (i = 0; i < *nk; i++) {
+        summe = RMat[i];
+        for (j = 1; j < *nk; j++) {
+          summe += RMat[*nk * j + i];
+        }
+        RMat[(*nk + 1) * i] -= summe;
+        RMat[i] *= dst;
+        for (j = 1; j < *nk; j++) {
+          RMat[*nk * j + i] *= dst;
+        }
+      }
+      expmat(RMat, nk, pred);
+      nrmPrMat(pred, nk);
+
+      free(RMat);
+    }
+  }
+}
+
+void predPSEUDO(double *coefs, double *prop, double *lags, int *nk, int *nc, int *nr, int *nmat, int *wsd, int *whichd, double *mypred) {
+  /* Compute transition probability matrices for a given multidimensional model by HPC applied to each lag vector
+              *coefs - matrices of coefficients
+               *prop - vector of proportions
+               *lags - matrix whose columns are lags
+                 *nk - number of categories
+                 *nc - sample space dimension
+                 *nr - number of lags
+               *nmat - number of coefficients matrices 
+                *wsd - same direction non duplicated
+             *whichd - main dimension to check opposite direction
+             *mypred - transition probability matrices */
+
+  int i;
+  double *mycoef;
+
+  if ((mycoef = (double *) malloc(*nk * *nk * *nmat * sizeof(double))) == NULL) {
+    #pragma omp critical
+    error("%s", myMemErr);
+  }
+
+  #pragma omp parallel for default(shared) private(i) schedule(static, 1)
+  for (i = 0; i < *nmat; i++) {
+    if (ISNAN(coefs[*nk * *nk * i])) {
+      memcpy(mycoef, coefs, *nk * *nk * sizeof(double));
+    }
+    else {
+      revCoef(&coefs[*nk * *nk * i], prop, nk, &mycoef[*nk * *nk * i]);
+    }
+  }
+
+  #pragma omp parallel for default(shared) private(i) schedule(static, 1)
+  for (i = 0; i < *nr; i++) {
+    predPSEUDOVET(&coefs[*nk * *nk * (wsd[i] - 1)], &mycoef[*nk * *nk * (wsd[i] - 1)], nk, nc, whichd, &lags[*nc * i], &mypred[*nk * *nk * i]);
+  }
+
+  free(mycoef);
+
+}
+
+void rotaH(int *nc, double *matdir, double *vet) {
+  int i, j;
+  double *lag;
+
+  if ((lag = (double *) malloc(*nc * sizeof(double))) == NULL) {
+    #pragma omp critical
+    error("%s", myMemErr);
+  }
+
+  for (i = 0; i < *nc; i++) {
+    lag[i] = vet[0] * matdir[*nc * i];
+    for (j = 1; j < *nc; j++) {
+      lag[i] += vet[j] * matdir[*nc * i + j];
+    }
+  }
+  memcpy(vet, lag, *nc * sizeof(double));
+  free(lag);
+}
+
+void jointProbsMCS(double *coords, int *hmany, double *grid, int *nrs, int *nc, int *nk, int *ndata, double *coefs, double *matdir, int *rota, double *pProbs) {
+  /* "Posterior" transition probabilities approximation (Multinomial Categorical Simulation)
+       *coords - matrix of data coordinates
+        *hmany - number of data coordinates
+         *grid - matrix of simulation coordinates
+          *nrs - number of simulation coordinates
+           *nc - sample space dimention
+           *nk - number of categories
+        *ndata - vector of neighbour categories
+        *coefs - matrices of coefficients
+       *matdir - rotation matrix
+         *rota - boolean (it's FALSE if matdir is identity)
+       *pProbs - matrix of probability vectors */
+
+  int i, j, k;
+  double mysum, mymax;
+  double *mycoef;
+
+  if ((mycoef = (double *) malloc(*nk * *nk * *nc * sizeof(double))) == NULL) {
+    #pragma omp critical
+    error("%s", myMemErr);
+  }
+
+  #pragma omp parallel for default(shared) private(i) schedule(static, 1)
+  for (i = 0; i < *nc; i++) {
+    revCoef(&coefs[*nk * *nk * i], pProbs, nk, &mycoef[*nk * *nk * i]);
+  }
+
+  #pragma omp parallel shared(nc, nk, myMemErr)
+  {
+    if ((h = (double *) malloc(*nc * sizeof(double))) == NULL) {
+      #pragma omp critical
+      error("%s", myMemErr);
+    }
+    if ((p = (double *) malloc(*nk * *nk * sizeof(double))) == NULL) {
+      #pragma omp critical
+      error("%s", myMemErr);
+    }
+  }
+
+  #pragma omp parallel for default(shared) private(i, j, k, mysum, mymax) schedule(static, 1)
+  for (i = 0; i < *nrs; i++) { // loop for grid
+    for (j = 0; j < *hmany; j++) { // loop for coords
+      for (k = 0; k < *nc; k++) {
+        h[k] = coords[*hmany * k + j] - grid[*nrs * k + i];
+      }
+      if (*rota) rotaH(nc, matdir, h);
+      predVET(coefs, mycoef, nk, nc, h, p);
+      if (!ISNAN(p[0])) {
+        pProbs[*nk * i] *= p[*nk * (ndata[j] - 1)];
+        mymax = pProbs[*nk * i];
+        for (k = 1; k < *nk; k++) {
+          pProbs[*nk * i + k] *= p[*nk * (ndata[j] - 1) + k];
+          if (mymax < pProbs[*nk * i + k]) mymax = pProbs[*nk * i + k];
+        }
+        if (mymax < 0.001) {
+         for (k = 0; k < *nk; k++) {
+            pProbs[*nk * i + k] *= 1000.0;
+          }
+        }
+      }
+    }
+    mysum = pProbs[*nk * i];
+    for (k = 1; k < *nk; k++) mysum += pProbs[*nk * i + k];
+    for (k = 0; k < *nk; k++) pProbs[*nk * i + k] /= mysum;
+  }
+
+  #pragma omp parallel
+  {
+    free(h);
+    free(p);
+  }
+  free(mycoef);
+}
+
+void rotaxes(int *nc, double *ang, double *res) {
+  int i, j;
+  double *rotmat;
+  
+  rotmat = (double *) malloc(*nc * *nc * sizeof(double));
+  
+  res[0] = cos(ang[0]);
+  res[1] = sin(ang[0]);
+  res[*nc] = - sin(ang[0]);
+  res[*nc + 1] = cos(ang[0]);
+  
+  for (i = 1; i < (*nc - 1); i++) {
+    if (ang[i] != 0.0) {
+      memcpy(rotmat, res, *nc * *nc * sizeof(double));
+      for (j = 0; j <= i; j++) {
+        res[j] = rotmat[j] * cos(ang[i]);
+        res[*nc * (i + 1) + j] = rotmat[j] * (- sin(ang[i]));
+      }
+      res[i + 1] = sin(ang[i]);
+      res[*nc * (i + 1) + (i + 1)] = cos(ang[i]);
+    }
+  }
+
+  free(rotmat);
+}
+
+void fastrss(int *n, double *mypred, double *Tmat, double *rss) {
+  /* Fast computation of the residual sum of squares
+            n - length of mypred and Tmat
+       mypred - predicted probabilities
+         Tmat - empirical probabilities
+          rss - residual sum of squares */
+
+  int i;
+  double *vet;
+
+  if ((vet = (double *) malloc(*n * sizeof(double))) == NULL) {
+    #pragma omp critical
+    error("%s", myMemErr);
+  }
+
+
+  #pragma omp parallel for default(shared) private(i) schedule(static, 1)
+  for (i = 0; i < *n; i++) {
+    vet[i] = mypred[i] - Tmat[i];
+    if (ISNA(vet[i]) || ISNAN(vet[i])) {
+      vet[i] = 0.0;
+    }
+    else {
+      vet[i] = R_pow_di(vet[i], 2);
+    }
+  }
+  *rss = 0.0;
+  for (i = 0; i < *n; i++) *rss += vet[i];
+  free(vet);
+}
+
+SEXP bclm(SEXP q, SEXP eps, SEXP res, SEXP echo, SEXP expr, SEXP Rnv) {
+  /* Perform the bound-constrained Lagrangian minimization
+          q - constant controlling the growth of rho
+        eps - convergence tolerance
+        res - initial point
+       echo - boolean value
+       expr - function to optimize
+        Rnv - R enviroment */
+
+  SEXP resOLD, r, ans;
+  int i = 1, j, n;
+  double mxdst, tmp;
+  double *dres, *dold, *dr, *dans;
+  
+  PROTECT(q = coerceVector(q, REALSXP));
+  PROTECT(eps = coerceVector(eps, REALSXP));
+  PROTECT(echo = coerceVector(echo, LGLSXP));
+  PROTECT(res = coerceVector(res, REALSXP));
+  n = length(res);
+  PROTECT(resOLD = allocVector(REALSXP, n));
+  PROTECT(r = allocVector(REALSXP, 1));
+  dres = REAL(res);
+  dold = REAL(resOLD);
+  dr = REAL(r);
+  dr[0] = 0.0;
+  
+  for (;;) {
+    #pragma omp parallel for default(shared) private(j) schedule(static, 1)
+    for (j = 0; j < n; j++) {
+      dold[j] = dres[j];
+    }
+    if (LOGICAL(echo)[0]) Rprintf("Iteration %d\n", i);
+    defineVar(install("rho"), r, Rnv);
+    defineVar(install("res"), res, Rnv);
+    PROTECT(ans = coerceVector(eval(expr, Rnv), REALSXP));
+    dans = REAL(ans);
+    mxdst = 0.0;
+    for (j = 0; j < n; j++) {
+      tmp = fabs(dold[j] - dans[j]);
+      if (mxdst < tmp) mxdst = tmp;
+    }
+    #pragma omp parallel for default(shared) private(j) schedule(static, 1)
+    for (j = 0; j < n; j++) {
+      dres[j] = dans[j];
+    }
+    UNPROTECT(1);
+    if (mxdst < REAL(eps)[0]) break;
+    ++i;
+    if (dr[0] <= 0.0) dr[0] = 0.1;
+    dr[0] *= REAL(q)[0];
+  }
+  UNPROTECT(6);
+  return(res);
+}
+
+void knear(int *nc, int *nr, double *coords, int *nrs, double *grid, int *knn, int *indices) {
+  /* Finding the k-nearest neighbours
+           *nc - number of columns
+           *nr - number of observation rows
+       *coords - matrix of coordinates
+          *nrs - number of simulation rows
+         *grid - simulation grid
+      *indices - row indices of the nearest observations */
+
+  int i, j, k;
+  double dst;
+  
+  #pragma omp parallel shared(knn, myMemErr)
+  {
+    if ((p = (double *) malloc(*knn * sizeof(double))) == NULL) {
+      #pragma omp critical
+      error("%s", myMemErr);
+    }
+    if ((wo = (int *) malloc(*knn * sizeof(int))) == NULL) {
+      #pragma omp critical
+      error("%s", myMemErr);
+    }
+  }
+  
+  #pragma omp parallel for default(shared) private(i, j, k, dst) schedule(static, 1)
+  for (i = 0; i < *nrs; i++) {
+    for (j = 0; j < *knn; j++) {
+      dst = R_pow_di(coords[j] - grid[i], 2);
+      for (k = 1; k < *nc; k++) {
+        dst += R_pow_di(coords[*nr * k + j] - grid[*nrs * k + i], 2);
+      }
+      // dst = sqrt(dst);
+      p[j] = dst;
+      wo[j] = j;
+    }
+    rsort_with_index(p, wo, *knn);
+    for (j = *knn; j < *nr; j++) {
+      dst = R_pow_di(coords[j] - grid[i], 2);
+      for (k = 1; k < *nc; k++) {
+        dst += R_pow_di(coords[*nr * k + j] - grid[*nrs * k + i], 2);
+      }
+      // dst = sqrt(dst);
+      if (dst < p[*knn - 1]) {
+        p[*knn - 1] = dst;
+        wo[*knn - 1] = j;
+        rsort_with_index(p, wo, *knn);
+      }
+    }
+    R_isort(wo, *knn);
+    indices[*knn * i] = wo[0];
+    for (k = 1; k < *knn; k++) {
+      indices[*knn * i + k] = wo[k];
+    }
+  }
+  
+  #pragma omp parallel
+  {
+    free(p);
+    free(wo);
+  }
+}
+
+void getIKPrbs(int *ordinary, int *indices, int *groups, int *knn, int *nc, int *nr, int *nrs, int *data, double *coords, double *grid, int *nk, double *coef, double *prop, double *probs) {
+  /* Computing simulation probabilities
+     *ordinary - boolean to distinguish ordinary or simple kriging
+      *indices - row indices of the nearest observations
+       *groups - vector with indices of same neighbours groups
+          *knn - number of neighbours considered
+           *nc - number of columns
+           *nr - number of observation rows
+          *nrs - number of simulation rows
+         *data - vector of observed categories
+       *coords - matrix of coordinates
+         *grid - simulation grid
+           *nk - number of categories
+        *coefs - matrices of coefficients
+         *prop - vector of proportions
+        *probs - transition probability matrices */
+
+  int g, i = 0, j, j1, j2, k, bg = 0, info = 0;
+  int knn2 = *knn * *knn;
+  int nk2 = *nk * *nk;
+  int nt = *nk * *knn;
+  double stds;
+  double *Ttilde, *invTtilde, *revcoef, *Wtilde, *Otilde;
+  
+  k = *nk * (knn2 + *ordinary * (*knn * 2 + 1));
+  if ((Ttilde = (double *) malloc(k * sizeof(double))) == NULL) {
+    #pragma omp critical
+    error("%s", myMemErr);
+  } //transition matrix for neighbour points
+  if ((invTtilde = (double *) malloc(k * sizeof(double))) == NULL) {
+    #pragma omp critical
+    error("%s", myMemErr);
+  } //inverse transition matrix for neighbour points
+  if ((revcoef = (double *) malloc(nk2 * *nc * sizeof(double))) == NULL) {
+    #pragma omp critical
+    error("%s", myMemErr);
+  } //matrices of coefficients for reverible MC
+  k = nt + *ordinary * *nk;
+  if ((Wtilde = (double *) malloc(k * sizeof(double))) == NULL) {
+    #pragma omp critical
+    error("%s", myMemErr);
+  } //vectors of kriging weights
+  if ((Otilde = (double *) malloc(k * sizeof(double))) == NULL) {
+    #pragma omp critical
+    error("%s", myMemErr);
+  } //vectors for simulation point transition probabilities
+
+  #pragma omp parallel shared(nc, ordinary, knn, myMemErr)
+  {
+    if ((TtLag = (double *) malloc(*nc * sizeof(double))) == NULL) {
+      #pragma omp critical
+      error("%s", myMemErr);
+    }
+    if ((tmpMat = (double *) malloc(nk2 * sizeof(double))) == NULL) {
+      #pragma omp critical
+      error("%s", myMemErr);
+    }
+    if ((pv = (int *) malloc(*ordinary + *knn * sizeof(int))) == NULL) {
+      #pragma omp critical
+      error("%s", myMemErr);
+    }
+  }
+
+  #pragma omp parallel for default(shared) private(k) schedule(static, 1)
+  for (k = 0; k < *nc; k++) {
+    revCoef(&coef[nk2 * k], prop, nk, &revcoef[nk2 * k]);
+  }
+  //set constraint values in the vectors
+  if (*ordinary) {
+    #pragma omp parallel for default(shared) private(k) schedule(static, 1)
+    for (k = 0; k < *nk; k++) {
+      Otilde[(*knn + 1) * k + *knn] = 1.0;
+    }
+  }
+
+  g = groups[i];
+  while (i < *nrs) {
+    //computation for one group
+    #pragma omp parallel for default(shared) private(j1, j2, k, j) schedule(static, 1)
+    for (j1 = 0; j1 < *knn; j1++) {
+      for (j2 = 0; j2 < *knn; j2++) {
+        for (k = 0; k < *nc; k++) {
+          TtLag[k] = coords[*nr * k + indices[*knn * i + j2]] - coords[*nr * k + indices[*knn * i + j1]];
+        }
+        //compute transition matrix
+        predVET(coef, revcoef, nk, nc, TtLag, tmpMat);
+        //set probability of the sample configuration for each category
+        for (j = 0; j < *nk; j++) {
+          k = (knn2 + *ordinary * (*knn * 2 + 1)) * j + (*knn + *ordinary) * j2 + j1;
+          Ttilde[k] = tmpMat[(*nk + 1) * j] - (1.0 - (double) *ordinary) * prop[j];
+        }
+      }
+    }
+    if (*ordinary) {
+      #pragma omp parallel for default(shared) private(j, k) schedule(static, 1)
+      for (j = 0; j < *nk; j++) {
+        for (k = 0; k < *knn; k++) {
+          Ttilde[(knn2 + *knn * 2 + 1) * j + (*knn + 1) * k + *knn] = 1.0;
+          Ttilde[(knn2 + *knn * 2 + 1) * j + knn2 + *knn + k] = 1.0;
+        }
+        Ttilde[(knn2 + *knn * 2 + 1) * (j + 1) - 1] = 0.0;
+      }
+      *knn += 1;
+      knn2 = *knn * *knn;
+    }
+    //set the indicator matries
+    #pragma omp parallel for default(shared) private(k) schedule(static, 1)
+    for (k = 0; k < (*nk * knn2); k++) {
+      invTtilde[k] = 0.0;
+    }
+    #pragma omp parallel for default(shared) private(k, j) schedule(static, 1)
+    for (k = 0; k < *knn; k++) {
+      for (j = 0; j < *nk; j++) {
+        invTtilde[knn2 * j + k * (1 + *knn)] = 1.0;
+      }
+    }
+   //invert the probability matrix of the sample configuration
+    #pragma omp parallel for default(shared) private(j) schedule(static, 1)
+    for (j = 0; j < *nk; j++) {
+      F77_CALL(dgesv)(knn, knn, &Ttilde[knn2 * j], knn, pv, &invTtilde[knn2 * j], knn, &info);
+    }
+    if (*ordinary) {
+      *knn -= 1;
+      knn2 = *knn * *knn;
+    }
+
+    for (; bg < *nrs; bg++) {
+      if (g != groups[bg]) break;
+    }
+
+    //cycle for points within the group
+    for (; i < bg; i++) {
+      #pragma omp parallel for default(shared) private(j1, k) schedule(static, 1)
+      for (j1 = 0; j1 < *knn; j1++) {
+        for (k = 0; k < *nc; k++) {
+          TtLag[k] = grid[*nrs * k + i] - coords[*nr * k + indices[*knn * i + j1]];
+        }
+        predVET(coef, revcoef, nk, nc, TtLag, tmpMat);
+        for (k = 0; k < *nk; k++) {
+          Otilde[(*knn + *ordinary) * k + j1] = tmpMat[(*nk + 1) * k] - (1.0 - (double) *ordinary) * prop[k];
+        }
+      }
+      j = 1;
+      if (*ordinary) {
+        *knn += 1;
+        knn2 = *knn * *knn;
+      }
+      for (k = 0; k < *nk; k++) {
+        fastMatProd(knn, knn, &invTtilde[knn2 * k], &j, &Otilde[*knn * k], &Wtilde[*knn * k]);
+      }
+      if (*ordinary) {
+        *knn -= 1;
+        knn2 = *knn * *knn;
+        #pragma omp parallel for default(shared) private(j1, j2) schedule(static, 1)
+        for (j1 = 0; j1 < *knn; j1++) {
+          for (j2 = 0; j2 < *nk; j2++) {
+            if (j2 + 1 != data[indices[*knn * i + j1]]) {
+              Wtilde[(*knn + 1) * j2 + j1] = 0.0;
+            }
+          }
+        }
+      }
+      else {
+        #pragma omp parallel for default(shared) private(j1, j2) schedule(static, 1)
+        for (j1 = 0; j1 < *knn; j1++) {
+          for (j2 = 0; j2 < *nk; j2++) {
+            if (j2 + 1 != data[indices[*knn * i + j1]]) {
+              Wtilde[*knn * j2 + j1] *= (-prop[j2]);
+            }
+            else {
+              Wtilde[*knn * j2 + j1] *= (1.0 - prop[j2]);
+            }
+          }
+        }
+      }
+
+      #pragma omp parallel for default(shared) private(j1, j2) schedule(static, 1)
+      for (j2 = 0; j2 < *nk; j2++) {
+        probs[*nrs * j2 + i] = prop[j2] * (1.0 - (double) *ordinary) + Wtilde[(*knn + *ordinary) * j2];
+        for (j1 = 1; j1 < *knn; j1++) {
+          probs[*nrs * j2 + i] += Wtilde[(*knn + *ordinary) * j2 + j1];
+        }
+        if (probs[*nrs * j2 + i] > 1.0) probs[*nrs * j2 + i] = 1.0;
+        if (probs[*nrs * j2 + i] < 0.0) probs[*nrs * j2 + i] = 0.0;
+      }
+      stds = 0.0; 
+      for (j2 = 0; j2 < *nk; j2++) {
+        stds += probs[*nrs * j2 + i];
+      }
+      if (stds == 0.0) {
+        for (j2 = 0; j2 < *nk; j2++) {
+          probs[*nrs * j2 + i] = prop[j2] * (1.0 - (double) *ordinary) + Wtilde[(*knn + *ordinary) * j2];
+          for (j1 = 1; j1 < *knn; j1++) {
+            probs[*nrs * j2 + i] += Wtilde[(*knn + *ordinary) * j2 + j1];
+          }
+          if (probs[*nrs * j2 + i] > 1.0) probs[*nrs * j2 + i] = 1.0;
+          if (probs[*nrs * j2 + i] < stds) stds = probs[*nrs * j2 + i];
+        }
+        #pragma omp parallel for default(shared) private(j2) schedule(static, 1)
+        for (j2 = 0; j2 < *nk; j2++) {
+          probs[*nrs * j2 + i] -= stds;
+        }
+        stds = probs[i];
+        for (j2 = 1; j2 < *nk; j2++) {
+          stds += probs[*nrs * j2 + i];
+        }
+      }
+      if (stds == 0.0) {
+        #pragma omp parallel for default(shared) private(j2) schedule(static, 1)
+        for (j2 = 0; j2 < *nk; j2++) {
+          probs[*nrs * j2 + i] = prop[j2];
+        }
+      }
+      else {
+        #pragma omp parallel for default(shared) private(j2) schedule(static, 1)
+        for (j2 = 0; j2 < *nk; j2++) {
+          probs[*nrs * j2 + i] /= stds;
+        }
+      }
+    }
+    g++;
+  }
+
+  free(Ttilde);
+  free(invTtilde);
+  free(revcoef);
+  free(Wtilde);
+  free(Otilde);
+
+  #pragma omp parallel
+  {
+    free(TtLag);
+    free(tmpMat);
+    free(pv);
+  }
+}
+
+void getCKPrbs(int *ordinary, int *indices, int *groups, int *knn, int *nc, int *nr, int *nrs, int *data, double *coords, double *grid, int *nk, double *coef, double *prop, double *probs) {
+  /* Computing simulation probabilities
+     *ordinary - boolean to distinguish ordinary or simple kriging
+      *indices - row indices of the nearest observations
+       *groups - vector with indices of same neighbours groups
+          *knn - number of neighbours considered
+           *nc - number of columns
+           *nr - number of observation rows
+          *nrs - number of simulation rows
+         *data - vector of observed categories
+       *coords - matrix of coordinates
+         *grid - simulation grid
+           *nk - number of categories
+        *coefs - matrices of coefficients
+         *prop - vector of proportions
+        *probs - transition probability matrices */
+
+  int g, i = 0, j, j1, j2, k, l, bg = 0, info = 0;
+  int knn2 = *knn * *knn;
+  int nk2 = *nk * *nk;
+  int nt = *nk * *knn;
+  double stds;
+  double *Ttilde, *invTtilde, *revcoef, *Wtilde, *Otilde;
+  
+  k = nk2 * (knn2 + *ordinary * (*knn * 2 + 1));
+  if ((Ttilde = (double *) malloc(k * sizeof(double))) == NULL) {
+    #pragma omp critical
+    error("%s", myMemErr);
+  } //transition matrix for neighbour points
+  if ((invTtilde = (double *) malloc(k * sizeof(double))) == NULL) {
+    #pragma omp critical
+    error("%s", myMemErr);
+  } //inverse transition matrix for neighbour points
+  if ((revcoef = (double *) malloc(nk2 * *nc * sizeof(double))) == NULL) {
+    #pragma omp critical
+    error("%s", myMemErr);
+  } //matrices of coefficients for reverible MC
+  k = *nk * nt + *ordinary * nk2;
+  if ((Wtilde = (double *) malloc(k * sizeof(double))) == NULL) {
+    #pragma omp critical
+    error("%s", myMemErr);
+  } //vectors of kriging weights
+  if ((Otilde = (double *) malloc(k * sizeof(double))) == NULL) {
+    #pragma omp critical
+    error("%s", myMemErr);
+  } //vectors for simulation point transition probabilities
+
+  #pragma omp parallel shared(nc, ordinary, knn, myMemErr)
+  {
+    if ((TtLag = (double *) malloc(*nc * sizeof(double))) == NULL) {
+      #pragma omp critical
+      error("%s", myMemErr);
+    }
+    if ((tmpMat = (double *) malloc(nk2 * sizeof(double))) == NULL) {
+      #pragma omp critical
+      error("%s", myMemErr);
+    }
+    if ((pv = (int *) malloc(*ordinary + *knn * sizeof(int))) == NULL) {
+      #pragma omp critical
+      error("%s", myMemErr);
+    }
+  }
+
+  #pragma omp parallel for default(shared) private(k) schedule(static, 1)
+  for (k = 0; k < *nc; k++) {
+    revCoef(&coef[nk2 * k], prop, nk, &revcoef[nk2 * k]);
+  }
+  //set constraint values in the vectors
+  if (*ordinary) {
+    #pragma omp parallel for default(shared) private(k) schedule(static, 1)
+    for (k = 0; k < nk2; k++) {
+      Otilde[(*knn + 1) * k + *knn] = 1.0;
+    }
+  }
+
+  g = groups[i];
+  while (i < *nrs) {
+    //computation for one group
+    #pragma omp parallel for default(shared) private(j1, j2, k, j, l) schedule(static, 1)
+    for (j1 = 0; j1 < *knn; j1++) {
+      for (j2 = 0; j2 < *knn; j2++) {
+        for (k = 0; k < *nc; k++) {
+          TtLag[k] = coords[*nr * k + indices[*knn * i + j2]] - coords[*nr * k + indices[*knn * i + j1]];
+        }
+        //compute transition matrix
+        predVET(coef, revcoef, nk, nc, TtLag, tmpMat);
+        //set probability of the sample configuration for each category couple
+        for (j = 0; j < *nk; j++) {
+          for (l = 0; l < *nk; l++) {
+            if (j == l) {
+              k = (knn2 + *ordinary * (*knn * 2 + 1)) * (1 + *nk) * j + (*knn + *ordinary) * j2 + j1;
+              Ttilde[k] = tmpMat[(*nk + 1) * j] - (1.0 - (double) *ordinary) * prop[j];
+            }
+            else {
+              k = (knn2 + *ordinary * (*knn * 2 + 1)) * (l + *nk * j) + *knn * j2 + j1;
+              Ttilde[k] = tmpMat[*nk * j + l] - (1.0 - (double) *ordinary) * prop[j];
+            }
+          }
+        }
+      }
+    }
+    if (*ordinary) {
+      #pragma omp parallel for default(shared) private(j, k) schedule(static, 1)
+      for (j = 0; j < *nk; j++) {
+        for (k = 0; k < *knn; k++) {
+          Ttilde[(knn2 + *knn * 2 + 1) * (1 + *nk) * j + (*knn + 1) * k + *knn] = 1.0;
+          Ttilde[(knn2 + *knn * 2 + 1) * (1 + *nk) * j + knn2 + *knn + k] = 1.0;
+        }
+        Ttilde[(knn2 + *knn * 2 + 1) * (1 + *nk) * (j + 1) - 1] = 0.0;
+      }
+      *knn += 1;
+      knn2 = *knn * *knn;
+    }
+    //set the indicator matries
+    #pragma omp parallel for default(shared) private(k) schedule(static, 1)
+    for (k = 0; k < (nk2 * knn2); k++) {
+      invTtilde[k] = 0.0;
+    }
+    if (*ordinary) {
+      *knn -= 1;
+      knn2 = *knn * *knn;
+    }
+    #pragma omp parallel for default(shared) private(k, j, l) schedule(static, 1)
+    for (k = 0; k < *knn; k++) {
+      for (j = 0; j < *nk; j++) {
+        for (l = 0; l < *nk; l++) {
+          if (j == l) {
+            invTtilde[(knn2 + *ordinary * (*knn * 2 + 1)) * (1 + *nk) * j + (*knn + *ordinary + 1) * k] = 1.0;
+          }
+          else {
+            invTtilde[(knn2 + *ordinary * (*knn * 2 + 1)) * (l + *nk * j) + (*knn + 1) * k] = 1.0;
+          }
+        }
+      }
+    }
+    //invert the probability matrix of the sample configuration
+    j2 = knn2 + *ordinary * (*knn * 2 + 1);
+    #pragma omp parallel for default(shared) private(j, l, j1) schedule(static, 1)
+    for (j = 0; j < *nk; j++) {
+      for (l = 0; l < *nk; l++) {
+        if (j == l) {
+          j1 = *knn + *ordinary;
+          F77_CALL(dgesv)(&j1, &j1, &Ttilde[j2 * (1 + *nk) * j], &j1, pv, &invTtilde[j2 * (1 + *nk) * j], &j1, &info);
+        }
+        else {
+          j1 = *knn;
+          F77_CALL(dgesv)(&j1, &j1, &Ttilde[j2 * (l + *nk * j)], &j1, pv, &invTtilde[j2 * (l + *nk * j)], &j1, &info);
+        }
+      }
+    }
+
+    for (; bg < *nrs; bg++) {
+      if (g != groups[bg]) break;
+    }
+
+    //cycle for points within the group
+    for (; i < bg; i++) {
+      #pragma omp parallel for default(shared) private(j1, k, l) schedule(static, 1)
+      for (j1 = 0; j1 < *knn; j1++) {
+        for (k = 0; k < *nc; k++) {
+          TtLag[k] = grid[*nrs * k + i] - coords[*nr * k + indices[*knn * i + j1]];
+        }
+        predVET(coef, revcoef, nk, nc, TtLag, tmpMat);
+        for (k = 0; k < *nk; k++) {
+          for (l = 0; l < *nk; l++) {
+            if (l == k) {
+              Otilde[(*knn + *ordinary) * (*nk + 1) * k + j1] = tmpMat[(*nk + 1) * k] - (1.0 - (double) *ordinary) * prop[k];
+            } 
+            else {
+              Otilde[(*knn + *ordinary) * (*nk * k + l) + j1] = tmpMat[*nk * k + l] - (1.0 - (double) *ordinary) * prop[k];
+            }
+          }
+        }
+      }
+      j = 1;
+      for (k = 0; k < *nk; k++) {
+        for (l = 0; l < *nk; l++) {
+          if (l == k) {
+            *knn += *ordinary;
+            knn2 = *knn * *knn;
+            fastMatProd(knn, knn, &invTtilde[knn2 * (*nk + 1) * k], &j, &Otilde[*knn * (*nk + 1) * k], &Wtilde[*knn * (*nk + 1) * k]);
+            *knn -= *ordinary;
+            knn2 = *knn * *knn;
+          }
+          else {
+            fastMatProd(knn, knn, &invTtilde[(knn2 + *ordinary * (*knn * 2 + 1)) * (*nk * k + l)], &j, &Otilde[(*knn + *ordinary) * (*nk * k + l)], &Wtilde[(*knn + *ordinary) * (*nk * k + l)]);
+          }
+        }
+      }
+      if (*ordinary) {
+        #pragma omp parallel for default(shared) private(j1, j2, l) schedule(static, 1)
+        for (j1 = 0; j1 < *knn; j1++) {
+          for (j2 = 0; j2 < *nk; j2++) {
+            for (l = 0; l < *nk; l++) {
+              if (l + 1 != data[indices[*knn * i + j1]]) {
+                Wtilde[(*knn + 1) * (*nk * j2 + l) + j1] = 0.0;
+              }
+            }
+          }
+        }
+      }
+      else {
+        #pragma omp parallel for default(shared) private(j1, j2, l) schedule(static, 1)
+        for (j1 = 0; j1 < *knn; j1++) {
+          for (j2 = 0; j2 < *nk; j2++) {
+            for (l = 0; l < *nk; l++) {
+              if (l + 1 != data[indices[*knn * i + j1]]) {
+                Wtilde[*knn * (*nk * j2 + l) + j1] *= (-prop[l]);
+              }
+              else {
+                Wtilde[*knn * (*nk * j2 + l) + j1] *= (1.0 - prop[l]);
+              }
+            }
+          }
+        }
+      }
+
+      #pragma omp parallel for default(shared) private(j1, j2, l) schedule(static, 1)
+      for (j2 = 0; j2 < *nk; j2++) {
+        probs[*nrs * j2 + i] = prop[j2] * (1.0 - (double) *ordinary);
+        for (l = 0; l < *nk; l++) {
+          for (j1 = 0; j1 < *knn; j1++) {
+            probs[*nrs * j2 + i] += Wtilde[(*knn + *ordinary) * (*nk * l + j2) + j1];
+          }
+        }
+        if (probs[*nrs * j2 + i] > 1.0) probs[*nrs * j2 + i] = 1.0;
+        if (probs[*nrs * j2 + i] < 0.0) probs[*nrs * j2 + i] = 0.0;
+      }
+      stds = 0.0; 
+      for (j2 = 0; j2 < *nk; j2++) {
+        stds += probs[*nrs * j2 + i];
+      }
+      if (stds == 0.0) {
+        for (j2 = 0; j2 < *nk; j2++) {
+          probs[*nrs * j2 + i] = prop[j2] * (1.0 - (double) *ordinary);
+            for (l = 0; l < *nk; l++) {
+            for (j1 = 0; j1 < *knn; j1++) {
+              probs[*nrs * j2 + i] += Wtilde[(*knn + *ordinary) * (*nk * l + j2) + j1];
+            }
+          }
+          if (probs[*nrs * j2 + i] > 1.0) probs[*nrs * j2 + i] = 1.0;
+          if (probs[*nrs * j2 + i] < stds) stds = probs[*nrs * j2 + i];
+        }
+        #pragma omp parallel for default(shared) private(j2) schedule(static, 1)
+        for (j2 = 0; j2 < *nk; j2++) {
+          probs[*nrs * j2 + i] -= stds;
+        }
+        stds = probs[i];
+        for (j2 = 1; j2 < *nk; j2++) {
+          stds += probs[*nrs * j2 + i];
+        }
+      }
+      if (stds == 0.0) {
+        #pragma omp parallel for default(shared) private(j2) schedule(static, 1)
+        for (j2 = 0; j2 < *nk; j2++) {
+          probs[*nrs * j2 + i] = prop[j2];
+        }
+      }
+      else {
+        #pragma omp parallel for default(shared) private(j2) schedule(static, 1)
+        for (j2 = 0; j2 < *nk; j2++) {
+          probs[*nrs * j2 + i] /= stds;
+        }
+      }
+    }
+    g++;
+  }
+
+  free(Ttilde);
+  free(invTtilde);
+  free(revcoef);
+  free(Wtilde);
+  free(Otilde);
+
+  #pragma omp parallel
+  {
+    free(TtLag);
+    free(tmpMat);
+    free(pv);
+  }
+}
+
+void KjointProbsMCS(double *coords, int *hmany, double *grid, int *nrs, int *nc, int *nk, int *ndata, int *knn, double *coefs, int *indices, double *pProbs) {
+  /* "Posterior" transition probabilities approximation with k-nearest neighbours
+        *coords - matrix of data coordinates            (Multinomial Categorical Simulation)
+         *hmany - number of data coordinates
+          *grid - matrix of simulation coordinates
+           *nrs - number of simulation coordinates
+            *nc - sample space dimention
+            *nk - number of categories
+         *ndata - vector of observed categories
+           *knn - number of k-nearest neighbours
+       *indices - matrix of indices
+         *coefs - matrices of coefficients
+        *pProbs - matrix of probability vectors */
+
+  int i, j, k;
+  double mysum, mymax;
+  double *mycoef;
+
+  if ((mycoef = (double *) malloc(*nk * *nk * *nc * sizeof(double))) == NULL) {
+    #pragma omp critical
+    error("%s", myMemErr);
+  }
+
+  #pragma omp parallel for default(shared) private(i) schedule(static, 1)
+  for (i = 0; i < *nc; i++) {
+    revCoef(&coefs[*nk * *nk * i], pProbs, nk, &mycoef[*nk * *nk * i]);
+  }
+
+  #pragma omp parallel shared(nc, myMemErr)
+  {
+    if ((h = (double *) malloc(*nc * sizeof(double))) == NULL) {
+      #pragma omp critical
+      error("%s", myMemErr);
+    }
+    if ((p = (double *) malloc(*nk * *nk * sizeof(double))) == NULL) {
+      #pragma omp critical
+      error("%s", myMemErr);
+    }
+  }
+
+  #pragma omp parallel for default(shared) private(i, j, k, mysum, mymax) schedule(static, 1)
+  for (i = 0; i < *nrs; i++) { // loop for grid
+    for (j = 0; j < *knn; j++) { // loop for coords
+      for (k = 0; k < *nc; k++) {
+        h[k] = coords[*hmany * k + indices[*knn * i + j]] - grid[*nrs * k + i];
+      }
+      predVET(coefs, mycoef, nk, nc, h, p);
+      if (!ISNAN(p[0])) {
+        pProbs[*nk * i] *= p[*nk * (ndata[j] - 1)];
+        mymax = pProbs[*nk * i];
+        for (k = 1; k < *nk; k++) {
+          pProbs[*nk * i + k] *= p[*nk * (ndata[j] - 1) + k];
+          if (mymax < pProbs[*nk * i + k]) mymax = pProbs[*nk * i + k];
+        }
+        if (mymax < 0.001) {
+          for (k = 0; k < *nk; k++) {
+            pProbs[*nk * i + k] *= 1000.0;
+          }
+        }
+      }
+    }
+    mysum = pProbs[*nk * i];
+    for (k = 1; k < *nk; k++) mysum += pProbs[*nk * i + k];
+    for (k = 0; k < *nk; k++) pProbs[*nk * i + k] /= mysum;
+  }
+
+  #pragma omp parallel
+  {
+    free(h);
+    free(p);
+  }
+  free(mycoef);
+}
+
+void cEmbFrq(double *s, int *nk, int *mt, double *eps, double *f) {
+  /* Maximum Entropy estiamtion of Embedded Frequencies
+         *s - vector of proportions divied by the mean lenghts
+        *nk - number of categories
+       *eps - double value of epsilon (test for convergence)
+         *f - vector of embedded frequencies */
+
+  int i, j, iter;
+  double mysum;
+  double *fold, *Fmat, *vet;
+
+  if ((fold = (double *) malloc(*nk * sizeof(double))) == NULL) {
+    #pragma omp critical
+    error("%s", myMemErr);
+  }
+  if ((Fmat = (double *) malloc(*nk * *nk * sizeof(double))) == NULL) {
+    #pragma omp critical
+    error("%s", myMemErr);
+  }
+  if ((vet = (double *) malloc(*nk * sizeof(double))) == NULL) {
+    #pragma omp critical
+    error("%s", myMemErr);
+  }
+
+  #pragma omp parallel for default(shared) private(i) schedule(static, 1)
+  for (i = 0; i < *nk; i++) {
+    fold[i] = s[i];
+  }
+  for (iter = 0; iter < *mt; iter++) {
+    #pragma omp parallel for default(shared) private(i, j, mysum) schedule(static, 1)
+    for (i = 0; i < *nk; i++) {
+      mysum = 0.0;
+      for (j = 0; j < i; j++) {
+        Fmat[*nk * i + j] = fold[i] * fold[j];
+        mysum += Fmat[*nk * i + j];
+      }
+      for (j = i + 1; j < *nk; j++) {
+        Fmat[*nk * i + j] = fold[i] * fold[j];
+        mysum += Fmat[*nk * i + j];
+      }
+      Fmat[(*nk + 1) * i] = mysum;
+    }
+    mysum = 0.0;
+    for (i = 0; i < *nk; i++) {
+      mysum = mysum + Fmat[(*nk + 1) * i];
+    }
+    #pragma omp parallel for default(shared) private(i) schedule(static, 1)
+    for (i = 0; i < *nk; i++) {
+      f[i] = s[i] * mysum / Fmat[(*nk + 1) * i];
+      vet[i] = fabs(f[i] - fold[i]);
+    }
+    mysum = vet[0];
+    j = 0;
+    for (i = 1; i < *nk; i++) {
+      if (vet[i] > mysum) {
+        mysum = vet[i];
+        j = i;
+      }
+    }
+    if (mysum < *eps) break;
+    #pragma omp parallel for default(shared) private(i) schedule(static, 1)
+    for (i = 0; i < *nk; i++) {
+      fold[i] = f[i];
+    }
+  }
+  free(fold);
+  free(Fmat);
+  free(vet);
+}
+
+void pathAlg(int *nrs, int *nrorig, int *nc, double *coords, double *grid, int *path, double *radius, int *nk, int *data, double *coefs, double *prop, double *prhat, int *pred) {
+/* "Posterior" transition probabilities approximation and prediction (Path Based Algorithms)
+           *nrs - number of simulation coordinates
+        *nrorig - number of data coordinates
+            *nc - sample space dimention
+        *coords - matrix of data coordinates
+          *grid - matrix of simulation coordinates
+          *path - vector of sequential indices
+      *mainDire - main directions
+        *radius - searching radius for a sphere
+            *nk - number of categories
+          *data - vector of observed categories
+         *coefs - matrices of coefficients
+          *prop - vector of proportions
+         *prhat - matrix of probability vectors
+          *pred - vector of predicted categories */
+
+  int i, j , k, l, nr, zeros, pmx, nlen, np;
+  int *wh, *cnt, *mydata, *ndata, *which, *pos, *vndata;
+  double vmx;
+  double *wgmLags, *site, *neighbour, *nbLength, *Tmat;
+
+  if ((site = (double *) malloc(*nc * sizeof(double))) == NULL) {
+    #pragma omp critical
+    error("%s", myMemErr);
+  }
+  for (i = 0; i < *nrs; i++) {
+    nr = *nrorig + i;
+    zeros = 0;
+    if ((wgmLags = (double *) malloc((*nc + 1) * nr * sizeof(double))) == NULL) {
+      #pragma omp critical
+      error("%s", myMemErr);
+    }
+    if ((mydata = (int *) malloc(nr * sizeof(int))) == NULL) {
+      #pragma omp critical
+      error("%s", myMemErr);
+    }
+    if ((wh = (int *) malloc(nr * sizeof(int))) == NULL) {
+      #pragma omp critical
+      error("%s", myMemErr);
+    }
+    /* COPYING COORDINATES AND DATA */
+    #pragma omp parallel for default(shared) private(j, k) schedule(static, 1)
+    for (j = 0; j < *nrorig; j++) {
+      mydata[j] = data[j];
+      for (k = 0; k < *nc; k++) {
+        wgmLags[nr * k + j] = coords[*nrorig * k + j];  
+      }
+    }
+    #pragma omp parallel for default(shared) private(j, k) schedule(static, 1)
+    for (j = 0; j < i; j++) {
+      mydata[*nrorig + j] = pred[path[j] - 1];
+      for (k = 0; k < *nc; k++) {
+        wgmLags[nr * k + *nrorig + j] = grid[*nrs * k + path[j] - 1];
+      }
+    }
+    #pragma omp parallel for default(shared) private(j) schedule(static, 1)
+    for (j = 0; j < *nc; j++) {
+      site[j] = grid[*nrs * j + path[i] - 1];
+    }
+    /* COMPUTING LAGS AND DISTANCES */
+    getDst(nc, &nr, site, wgmLags, wgmLags);
+    /* CHECKING FOR ZERO LAGS AND LAGS WITHIN THE SEARCHING SPHERE */
+    #pragma omp parallel for default(shared) private(j) schedule(static, 1) reduction(+ : zeros)
+    for (j = 0; j < nr; j++) {
+      wh[j] = j;
+      if (wgmLags[*nc * nr + j] == 0.0) zeros = zeros + 1;
+      if (wgmLags[*nc * nr + j] > *radius) wh[j] = -1;
+    }
+    if (zeros) {
+      if ((cnt = (int *) malloc(*nk * sizeof(int))) == NULL) {
+        #pragma omp critical
+        error("%s", myMemErr);
+      }
+      #pragma omp parallel for default(shared) private(j) schedule(static, 1)
+      for (j = 0; j < *nk; j++) {
+        cnt[j] = 0;
+      }
+      /* COMPUTING PROBABILITIES AND PREDICTION IF ZERO LAGS ARE PRESENT */
+      for (j = 0; j < nr; j++) {
+        if (wgmLags[*nc * nr + j] == 0.0) ++cnt[mydata[j] - 1];
+      }
+      prhat[path[i] - 1] = ((double) cnt[0]) / ((double) zeros);
+      pmx = 0;
+      vmx = prhat[path[i] - 1];
+      for (j = 1; j < *nk; j++) {
+        prhat[*nrs * j + path[i] - 1] = ((double) cnt[j]) / ((double) zeros);
+        if (vmx < prhat[*nrs * j + path[i] - 1]) {
+          pmx = j;
+          vmx = prhat[*nrs * j + path[i] - 1];
+        }
+      }
+      pred[path[i] - 1] = pmx + 1;
+      free(cnt);
+    }
+    else {
+      /* COMPUTING NUMBER OF POINTS INSIDE THE SEARCHING SPHERE */
+      nlen = 0;
+      #pragma omp parallel for default(shared) private(j) schedule(static, 1) reduction(+ : nlen)
+      for (j = 0; j < nr; j++) {
+        if (wh[j] >= 0) nlen = nlen + 1;
+      }
+      if (nlen) { 
+        /* COPYING NEIGHBOURS DATA IF THEY ARE FOUND */
+        if ((neighbour = (double *) malloc(*nc * nlen * sizeof(double))) == NULL) {
+          #pragma omp critical
+          error("%s", myMemErr);
+        }
+        if ((ndata = (int *) malloc(nlen * sizeof(int))) == NULL) {
+          #pragma omp critical
+          error("%s", myMemErr);
+        }
+        if ((nbLength = (double *) malloc(nlen * sizeof(double))) == NULL) {
+          #pragma omp critical
+          error("%s", myMemErr);
+        }
+        if ((which = (int *) malloc(nlen * sizeof(int))) == NULL) {
+          #pragma omp critical
+          error("%s", myMemErr);
+        }
+        if ((pos = (int *) malloc((1 << *nc) * sizeof(int))) == NULL) {
+          #pragma omp critical
+          error("%s", myMemErr);
+        }
+        k = 0;
+        for (j = 0; j < nr; j++) {
+          if (wh[j] >= 0) {
+            #pragma omp parallel sections default(shared)
+            {
+              #pragma omp section
+              {
+                for (l = 0; l < *nc; l++) neighbour[nlen * l + k] = wgmLags[nr * l + j];
+              }
+              #pragma omp section
+              {
+                ndata[k] = mydata[j];
+              }
+              #pragma omp section
+              {
+                nbLength[k] = wgmLags[*nc * nr + j];
+              }
+            }
+            ++k;
+          }
+        }
+        /* FINDING CLOSER NEIGHBOURS NEAR THE MAIN DIRECTIONS */
+        nearDire(nc, &nlen, neighbour, which);
+        getPos(nbLength, which, &np, &nlen, nc, pos);
+        free(nbLength);
+        if ((nbLength = (double *) malloc(*nc * np * sizeof(double))) == NULL) {
+          #pragma omp critical
+          error("%s", myMemErr);
+        }
+        if ((vndata = (int *) malloc(np * sizeof(int))) == NULL) {
+          #pragma omp critical
+          error("%s", myMemErr);
+        }
+        k = 0;
+        for (j = 0; j < (1 << *nc); j++) {
+          if (pos[j] >= 0) {
+            vndata[k] = ndata[pos[j]];
+            #pragma omp parallel for default(shared) private(l) schedule(static, 1)
+            for (l = 0; l < *nc; l++) {
+              nbLength[*nc * k + l] = neighbour[nlen * l + pos[j]];
+            }
+            ++k;
+          }
+        }
+        free(neighbour);
+        free(ndata);
+        free(which);
+        free(pos);
+        /* COMPUTING PROBABILITIES IF SOME NEIGHBOURS ARE FOUND */
+        if ((Tmat = (double *) malloc(*nk * *nk * np * sizeof(double))) == NULL) {
+          #pragma omp critical
+          error("%s", myMemErr);
+        }
+        predMULTI(coefs, prop, nbLength, nk, nc, &np, Tmat);
+        if ((neighbour = (double *) malloc(*nk * sizeof(double))) == NULL) {
+          #pragma omp critical
+          error("%s", myMemErr);
+        }
+        jointProbs(&np, nk, vndata, Tmat, neighbour);
+        #pragma omp parallel for default(shared) private(j) schedule(static, 1)
+        for (j = 0; j < *nk; j++) prhat[*nrs * j + path[i] - 1] = neighbour[j];
+        free(Tmat);
+        free(vndata);
+        free(nbLength);
+        free(neighbour);
+      }
+      else {
+        /* COMPUTING PROBABILITIES IF NO NEIGHBOURS ARE FOUND */
+        #pragma omp parallel for default(shared) private(j) schedule(static, 1)
+        for (j = 0; j < *nk; j++) prhat[*nrs * j + path[i] - 1] = prop[j];
+      }
+
+      /* COMPUTING PREDICTION */
+      pmx = 0;
+      vmx = prhat[path[i] - 1];
+      for (j = 1; j < *nk; j++) {
+        if (vmx < prhat[*nrs * j + path[i] - 1]) {
+          pmx = j;
+          vmx = prhat[*nrs * j + path[i] - 1];
+        }
+      }
+      pred[path[i] - 1] = pmx + 1;
+    }
+    free(wgmLags);
+    free(mydata);
+    free(wh);
+  }
+  free(site);
+}
+
+void getPos(double *nbLength, int *which, int *np, int *nlen, int *nc, int *pos) {
+  /* Computing vector position of the nearest orthogonal position
+       *nbLength - lengths of neighbour lags
+          *which - definition of main directions
+             *np - number of non negative positions
+           *nlen - number of nearest points
+             *nc - sample space dimention
+            *pos - nearest orthogonal position*/
+
+  int i, j, cnp;
+  int *idx;
+
+  if ((idx = (int *) malloc(*nlen * sizeof(int))) == NULL) {
+    #pragma omp critical
+    error("%s", myMemErr);
+  }
+  #pragma omp parallel for default(shared) private(i) schedule(static, 1)
+  for (i = 0; i < *nlen; i++) {
+    idx[i] = i;
+  }
+  rsort_with_index(nbLength, idx, *nlen);
+  #pragma omp parallel for default(shared) private(i, j) schedule(static, 1)
+  for (i = 0; i < (1 << *nc); i++) {
+    for (j = 0; j < *nlen; j++) {
+      if (i == which[idx[j]]) break;
+    }
+    pos[i] = (j < *nlen) ? idx[j] : -1;
+  }
+  cnp = 0;
+  #pragma omp parallel for default(shared) private(i) schedule(static, 1) reduction(+ : cnp)
+  for (i = 0; i < (1 << *nc); i++) {
+    if (pos[i] >= 0) cnp = cnp + 1;
+  }
+  *np = cnp;
+  free(idx);
+}
+
+void nearDire(int *nc, int *nlen, double *neighbour, int *which) {
+  /* Find the nearest points in the $2 * nc$ directions
+         *nc - dimension of coordinates
+       *nlen - number of nearest points
+  *neighbour - known nearest loacations
+      *which - main directions as result */
+
+  int i, j;
+
+  #pragma omp parallel for default(shared) private(i, j) schedule(static, 1)
+  for (i = 0; i < *nlen; i++) {      // neighbour cycle
+    which[i] = 0;
+    for (j = 0; j < *nc; j++) {      // mainDire cycle
+      if (neighbour[*nlen * j + i] > 0.0) which[i] += (1 << j);
+    }
+  }
+}
+
+void objfun(int *nrs, int *nk, int *nc, int *mySim, double *grid, double *coef, double *prop, double *res) {
+  /* Computing objective function through transition probabilities
+          *nrs - number of simulation rows
+           *nk - number of categories
+           *nc - number of columns
+        *mySim - vector of simulated categories
+         *grid - simulation grid
+        *coefs - matrices of coefficients
+         *prop - vector of proportions
+          *res - numerical result of the objective function */
+  int i, j, k, nk2;
+  double reso = 0.0;
+  double *revcoef;
+
+  nk2 = *nk * *nk;
+  if ((revcoef = (double *) malloc(nk2 * *nc * sizeof(double))) == NULL) {
+    #pragma omp critical
+    error("%s", myMemErr);
+  }
+
+  #pragma omp parallel shared(nc, nk2)
+  {
+    if ((tmpMat = (double *) malloc(nk2 * sizeof(double))) == NULL) {
+      #pragma omp critical
+      error("%s", myMemErr);
+    }
+    if ((TtLag = (double *) malloc(*nc * sizeof(double))) == NULL) {
+      #pragma omp critical
+      error("%s", myMemErr);
+    }
+  }
+
+  #pragma omp parallel for default(shared) private(k) schedule(static, 1)
+  for (k = 0; k < *nc; k++) {
+    revCoef(&coef[nk2 * k], prop, nk, &revcoef[nk2 * k]);
+  }
+  #pragma omp parallel for default(shared) private(i, j, k) reduction(+ : reso) schedule(static, 1)
+  for (i = 0; i < *nrs; i++) {
+    for (j = 0; j < *nrs; j++) {
+      if (i != j) {
+        // Compute the transition probabilities through the model
+        for (k = 0; k < *nc; k++) {
+          TtLag[k] = grid[*nrs * k + j] - grid[*nrs * k + i];
+        }
+        predVET(coef, revcoef, nk, nc, TtLag, tmpMat);
+        // Compute the penalty value
+        tmpMat[mySim[j] * *nk - *nk + mySim[i] - 1] -= 1.0;
+        for (k = 0; k < nk2; k++) {
+          reso = reso + fabs(tmpMat[k]);
+        }
+      }
+    }
+  }
+  *res = reso;
+  #pragma omp parallel
+  {
+    free(tmpMat);
+    free(TtLag);
+  }
+  free(revcoef);
+}
+
+void fastobjfun(int *knn, int *indices, int *nrs, int *nk, int *nc, int *nr, int *mySim, double *grid, double *coef, double *prop, int *data, double *coords, double *res) {
+  /* Fast computation of the objective function through transition probabilities
+          *knn - number of neighbours considered
+      *indices - row indices of the nearest observations
+          *nrs - number of simulation rows
+           *nk - number of categories
+           *nc - number of columns
+           *nr - number of observation rows
+        *mySim - vector of simulated categories
+         *grid - simulation grid
+        *coefs - matrices of coefficients
+         *prop - vector of proportions
+         *data - vector of observed categories
+       *coords - matrix of coordinates
+          *res - numerical result of the objective function */
+  int i, j, k, nk2;
+  double reso = 0.0;
+  double *revcoef;
+
+  nk2 = *nk * *nk;
+  if ((revcoef = (double *) malloc(nk2 * *nc * sizeof(double))) == NULL) {
+    #pragma omp critical
+    error("%s", myMemErr);
+  }
+
+  #pragma omp parallel shared(nc, nk2)
+  {
+    if ((tmpMat = (double *) malloc(nk2 * sizeof(double))) == NULL) {
+      #pragma omp critical
+      error("%s", myMemErr);
+    }
+    if ((TtLag = (double *) malloc(*nc * sizeof(double))) == NULL) {
+      #pragma omp critical
+      error("%s", myMemErr);
+    }
+  }
+
+  #pragma omp parallel for default(shared) private(k) schedule(static, 1)
+  for (k = 0; k < *nc; k++) {
+    revCoef(&coef[nk2 * k], prop, nk, &revcoef[nk2 * k]);
+  }
+  #pragma omp parallel for default(shared) private(i, j, k) reduction(+ : reso) schedule(static, 1)
+  for (i = 0; i < *nrs; i++) {
+    for (j = 0; j < *knn; j++) {
+      // Compute the transition probabilities through the model
+      for (k = 0; k < *nc; k++) {
+        TtLag[k] = coords[*nr * k + indices[*knn * i + j]] - grid[*nrs * k + i];
+      }
+      predVET(coef, revcoef, nk, nc, TtLag, tmpMat);
+      // Compute the penalty value
+      tmpMat[data[j] * *nk - *nk + mySim[i] - 1] -= 1.0;
+      for (k = 0; k < nk2; k++) {
+        reso = reso + fabs(tmpMat[k]);
+      }
+    }
+  }
+  *res = reso;
+  #pragma omp parallel
+  {
+    free(tmpMat);
+    free(TtLag);
+  }
+  free(revcoef);
+}

@@ -1,0 +1,34 @@
+tpfit <-
+function(data, coords, direction, tolerance = pi/8, mle = FALSE) {
+  # Estimation for matrix of transition rates
+  #          ( Mean Length Method )
+  #
+  #       data vector of data
+  #     coords coordinates matrix
+  #  direction vector (or versor) of choosen direction
+  #  tolerance angle tolerance (in radians)
+  #        mle logical value to pass to the function mlen
+
+  if (!is.factor(data)) data <- as.factor(data)
+  if (!is.matrix(coords)) coords <- as.matrix(coords)
+  n <- dim(coords)[1]
+  nc <- dim(coords)[2]
+  if (length(direction) != nc) stop("wrong length of direction vector")
+  nl <- nlevels(data)
+  if (n < (nl^2 + nl)) stop("there are not enough data to estimate the parameters")
+
+  loc.id <- which.lines(coords, direction, tolerance)
+  ml <- mlen(data, coords, loc.id, direction, mle)
+  res <- list()
+  res$coefficients <- embed.MC(data, coords, loc.id, direction)
+  diag(res$coefficients) <- -1
+  res$coefficients <- diag(1 / ml) %*% res$coefficients
+  res$prop <- table(data)
+  res$prop <- as.double(res$prop / sum(res$prop))
+  colnames(res$coefficients) <- rownames(res$coefficients) <- names(res$prop)
+  res$tolerance <- as.double(tolerance)
+  
+  class(res) <- "tpfit"
+  return(res)
+}
+

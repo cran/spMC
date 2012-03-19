@@ -1,0 +1,21 @@
+Package: spMC
+Type: Package
+Title: Continuous Lag Spatial Markov Chains
+Version: 0.2.0
+Date: 2012-03-19
+Author: Luca Sartore
+Maintainer: Luca Sartore <drwolf85@gmail.com>
+Description: The main goal of this package is to provide a set of
+        functions for 1) the stratum lengths analysis along a chosen
+        direction, 2) fast estimation of continuous lag spatial Markov
+        chains model parameters and probability computing (also for
+        large data sets), 3) transition probability maps and
+        transiograms drawing, 4) simulation methods for categorical
+        random fields.
+Depends: R (>= 2.14.1), base, methods, datasets, utils, grDevices,
+        graphics, stats
+License: GPL (>= 2)
+LazyLoad: yes
+Packaged: 2012-03-19 10:02:09 UTC; root
+Repository: CRAN
+Date/Publication: 2012-03-19 16:29:00
