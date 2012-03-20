@@ -1,2 +1,2 @@
 PKG_CFLAGS=-fopenmp
-PKG_LIBS=-lgomp $(BLAS_LIBS) $(LAPACK_LIBS) $(FLIBS)
+PKG_LIBS=-lgomp -lpthread $(BLAS_LIBS) $(LAPACK_LIBS) $(FLIBS)

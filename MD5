@@ -1,5 +1,5 @@
 eb723b61539feef013de476e68b5c50a *COPYING
-7b94876289d115df4853e2c7094bcaa4 *DESCRIPTION
+094659a02a977af8e32d371aceca20fc *DESCRIPTION
 bb9e185e52089401d153b15bbf5a12d9 *NAMESPACE
 0b79e7f11f158295d1c665a2dddbe204 *R/boxplot.lengths.R
 aba580492ab9b1eaa16fa39f65094ddd *R/ck.sim.R
@@ -44,8 +44,8 @@ eb0fdc6fed316b66cd7647a729c76c03 *R/tpfit.R
 e8141aa1f9556fd079b31c1ff6623c56 *R/which.lines.R
 b88b23bf0914ed0375a9410ee14d9cfb *R/zzz.R
 d6ebea193ff2921b1f40d58bc7051dbd *cleanup
-57d91dd73b6ba493e78094862f0a11e4 *configure
-8d6a0da04b9832a128e47702440d07e2 *configure.ac
+36290483d6d092929a42115f3f5a2c6d *configure
+e2dd9d857184a1c4ab840a4e8a26bec9 *configure.ac
 f706907a932812aa837934644b0d7d10 *data/ACM.rda
 289910903bb5ddd5bc5f95607d5ded09 *man/ACM.Rd
 916bedf0c608ac200401c94acd28db18 *man/boxplot.lengths.Rd
@@ -85,12 +85,12 @@ f248b746c821e3a0ab2fe1a72c36a122 *man/plot.lengths.Rd
 3e9da8ab337610d4010ffc96dc1fb3ef *man/print.tpfit.Rd
 1d9fdfadf6f7e4f153afed7481ef01ee *man/print.transiogram.Rd
 ce412c2399bdde47c3e7c0ec4292485e *man/setCores.Rd
-62591cbf48ee7dd5275d69867508036e *man/spMC-package.Rd
+9a12232b1bf2ad293260aba2139f80cf *man/spMC-package.Rd
 5ba2dc60cacfe8e130a87a172fcc25a7 *man/summary.lengths.Rd
 345d51b204fa7c25a72e337d655c111c *man/tpfit.Rd
 e0c120e58564b144d8ed1fc6bafe31f0 *man/transiogram.Rd
 5cc140d61c4466908818aae20009e69e *man/which.lines.Rd
-b5751ec020be0c6d4ffcb086b5c05fcf *src/Makevars.in
-eabbe2c60c2281353c1dd650673584e9 *src/Makevars.win
+eb00a821fd0062a21baa0e70725ea942 *src/Makevars.in
+2403253e0b3a48d3bc405024fcb326d4 *src/Makevars.win
 644a2a8ed71efa18f6a2ddb622c5e449 *src/spMC.c
 2f564fbb1c9c0394cdd611b0abbf6f2c *tests/spMC-Ex.R

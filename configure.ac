@@ -33,7 +33,7 @@ if test "${ac_pkg_openmp}" = no; then
   OPENMP_CFLAGS=""
   LGOMP_CFLAGS=""
 else
-  LGOMP_CFLAGS="-lgomp"
+  LGOMP_CFLAGS="-lgomp -lpthread"
 fi
 
 AC_SUBST(OPENMP_CFLAGS)
