@@ -145,15 +145,13 @@ function(x, data, coords, grid, knn = 12, ordinary = TRUE, GA = FALSE, optype = 
       return(res)
     }
   }
-  Rnv <- new.env()
-  if (max.it > 0) {
+  if (max.it > 0 & !(optype %in% c("fullprobs", "semiprobs", "coordprobs"))) {
     loc.id <- apply(dire.mat, 1, function(d) which.lines(grid, d, tolerance = x$tolerance))
-    assign("loc.id", loc.id, envir = Rnv)
   }
-  assign("nc", nc, envir = Rnv)
-  assign("dire.mat", dire.mat, envir = Rnv)
   storage.mode(initSim) <- "integer"
   storage.mode(max.it) <- "integer"
+  Rnv <- new.env()
+  Rnv <- parent.env(Rnv)
 
   if (!GA) { # SIMULATED ANNEALING #
     old <- .Call("annealingSIM", max.it, initSim, x, grid, quote(toOptim(x, pp, grid)), Rnv, PACKAGE = "spMC")

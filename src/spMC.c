@@ -2186,7 +2186,7 @@ void getCKPrbs(int *ordinary, int *indices, int *groups, int *knn, int *nc, int 
           Ttilde[(knn2 + *knn * 2 + 1) * (1 + *nk) * j + (*knn + 1) * k + *knn] = 1.0;
           Ttilde[(knn2 + *knn * 2 + 1) * (1 + *nk) * j + knn2 + *knn + k] = 1.0;
         }
-        Ttilde[(knn2 + *knn * 2 + 1) * (1 + *nk) * (j + 1) - 1] = 0.0;
+        Ttilde[(knn2 + *knn * 2 + 1) * (1 + *nk) * j + knn2 + *knn + k] = 0.0;
       }
       *knn += 1;
       knn2 = *knn * *knn;
@@ -2793,7 +2793,7 @@ void objfun(int *nrs, int *nk, int *nc, int *mySim, double *grid, double *coef, 
     error("%s", myMemErr);
   }
 
-  #pragma omp parallel shared(nc, nk2)
+  #pragma omp parallel shared(nc, nk2, myMemErr)
   {
     if ((tmpMat = (double *) malloc(nk2 * sizeof(double))) == NULL) {
       #pragma omp critical
@@ -2860,7 +2860,7 @@ void fastobjfun(int *knn, int *indices, int *nrs, int *nk, int *nc, int *nr, int
     error("%s", myMemErr);
   }
 
-  #pragma omp parallel shared(nc, nk2)
+  #pragma omp parallel shared(nc, nk2, myMemErr)
   {
     if ((tmpMat = (double *) malloc(nk2 * sizeof(double))) == NULL) {
       #pragma omp critical
@@ -2885,7 +2885,7 @@ void fastobjfun(int *knn, int *indices, int *nrs, int *nk, int *nc, int *nr, int
       }
       predVET(coef, revcoef, nk, nc, TtLag, tmpMat);
       // Compute the penalty value
-      tmpMat[data[j] * *nk - *nk + mySim[i] - 1] -= 1.0;
+      tmpMat[data[indices[*knn * i + j]] * *nk - *nk + mySim[i] - 1] -= 1.0;
       for (k = 0; k < nk2; k++) {
         reso = reso + fabs(tmpMat[k]);
       }

@@ -72,14 +72,14 @@ mygrid <- as.matrix(expand.grid(mygrid$X, mygrid$Y, mygrid$Z))
 # Simulate the random field through
 # Simple Indicator Cokriging algorithm and
 # optimize by Simulated Annealing
-myANSim <- ck.sim(x, ACM$MAT5, ACM[, 1:3], mygrid, ordinary = FALSE, optype = "param", max.it = 2)
-myANSim <- ck.sim(x, ACM$MAT5, ACM[, 1:3], mygrid, ordinary = FALSE, optype = "fullprobs", max.it = 2)
+myANSimP <- ck.sim(x, ACM$MAT5, ACM[, 1:3], mygrid, ordinary = FALSE, optype = "param", max.it = 2)
+myANSimF <- ck.sim(x, ACM$MAT5, ACM[, 1:3], mygrid, ordinary = FALSE, optype = "fullprobs", max.it = 2)
 
 # Simulate the random field through
 # Ordinary Indicator Cokriging algorithm and
 # optimize by Genetic Algorithm
-myGASim <- ck.sim(x, ACM$MAT5, ACM[, 1:3], mygrid, GA = TRUE, optype = "semiprobs", max.it = 2)
-myGASim <- ck.sim(x, ACM$MAT5, ACM[, 1:3], mygrid, GA = TRUE, optype = "coordprobs", max.it = 2)
+myGASimS <- ck.sim(x, ACM$MAT5, ACM[, 1:3], mygrid, GA = TRUE, optype = "semiprobs", max.it = 2)
+myGASimC <- ck.sim(x, ACM$MAT5, ACM[, 1:3], mygrid, GA = TRUE, optype = "coordprobs", max.it = 2)
 
 ### Name: density.lengths
 ### Title: Empirical Densities Estimation of Stratum Lengths
@@ -117,14 +117,14 @@ hist(gl)
 # Simulate the random field through
 # Simple Indicator Kriging algorithm and
 # optimize by Simulated Annealing
-myANSim <- ik.sim(x, ACM$MAT5, ACM[, 1:3], mygrid, ordinary = FALSE, optype = "param", max.it = 2)
-myANSim <- ik.sim(x, ACM$MAT5, ACM[, 1:3], mygrid, ordinary = FALSE, optype = "fullprobs", max.it = 2)
+myANSimP <- ik.sim(x, ACM$MAT5, ACM[, 1:3], mygrid, ordinary = FALSE, optype = "param", max.it = 2)
+myANSimF <- ik.sim(x, ACM$MAT5, ACM[, 1:3], mygrid, ordinary = FALSE, optype = "fullprobs", max.it = 2)
 
 # Simulate the random field through
 # Ordinary Indicator Kriging algorithm and
 # optimize by Genetic Algorithm
-myGASim <- ik.sim(x, ACM$MAT5, ACM[, 1:3], mygrid, GA = TRUE, optype = "semiprobs", max.it = 2)
-myGASim <- ik.sim(x, ACM$MAT5, ACM[, 1:3], mygrid, GA = TRUE, optype = "coordprobs", max.it = 2)
+myGASimS <- ik.sim(x, ACM$MAT5, ACM[, 1:3], mygrid, GA = TRUE, optype = "semiprobs", max.it = 2)
+myGASimC <- ik.sim(x, ACM$MAT5, ACM[, 1:3], mygrid, GA = TRUE, optype = "coordprobs", max.it = 2)
 
 ### Name: ilstpfit
 ### It will be tested during the multi.ilstpfit() example
