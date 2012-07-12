@@ -24,7 +24,7 @@ function(data, coords, loc.id, direction, mle = FALSE) {
     }
 
     res <- nlminb(param, NegLik, lower = -Inf, upper = Inf)
-    cat("Optimization message: ", res$message, "\n", sep = "")
+    message("Optimization message: ", res$message, sep = "")
     meanlen <- exp(res$par[1:nk] + 0.5 * exp(2 * res$par[(nk + 1):(2 * nk)]))
   }
   else {
@@ -56,4 +56,3 @@ function(data, coords, loc.id, direction, mle = FALSE) {
   names(meanlen) <- levels(data)
   return(meanlen)
 }
-

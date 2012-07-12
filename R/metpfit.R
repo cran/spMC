@@ -39,7 +39,9 @@ function(data, coords, direction, tolerance = pi/8, max.it = 9000, mle = FALSE) 
   res <- list()
   res$coefficients <- Rmat
   res$prop <- as.double(proportion)
-  colnames(res$coefficients) <- rownames(res$coefficients) <- names(res$prop)
+  names(res$prop) <- levels(data)
+  colnames(res$coefficients) <- names(res$prop)
+  rownames(res$coefficients) <- names(res$prop)
   res$tolerance <- as.double(tolerance)
   
   class(res) <- "tpfit"

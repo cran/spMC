@@ -13,13 +13,14 @@ function(n) {
   n <- 0L
   crTot <- 0L
   n <- .C('getNumSlaves', n = as.integer(n), DUP = FALSE, PACKAGE = "spMC")$n
-  if (n <= 1L) {
-    cat("Parallel computation will not perform. CPU cores in use: 1.\n")
+  if (n == 1L) {
+    message("Parallel computation will not perform. CPU cores in use: 1.")
   }
-  else {
+  else if (n > 1L){
     crTot <- .C('getNumCores', n = as.integer(crTot), DUP = FALSE, PACKAGE = "spMC")$n
-    cat("Parallel computation will perform.\n")
-    cat("  Total CPU cores available: ", crTot, ".\n", sep = "")
-    cat("  CPU cores in use: ", n, ".\n", sep = "")
+    message("Parallel computation will perform.")
+    message("  Total CPU cores available: ", crTot, ".", sep = "")
+    message("  CPU cores in use: ", n, ".", sep = "")
   }
+  invisible(n)
 }

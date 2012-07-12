@@ -1,4 +1,4 @@
 .onLoad <- function(lib, pkg) {
-       setCores(1)
-       packageStartupMessage("\nUse the function setCores() to change the number of CPU cores.\n")
+       nn <- setCores(1L)
+       if (nn > 0L) packageStartupMessage("\nUse the function setCores() to change the number of CPU cores.")
 }

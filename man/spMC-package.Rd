@@ -20,8 +20,8 @@ The main goal of this package is to provide a set of functions for
 \tabular{ll}{
 Package: \tab spMC\cr
 Type: \tab Package\cr
-Version: \tab 0.2.2\cr
-Date: \tab 2012-03-21\cr
+Version: \tab 0.2.4\cr
+Date: \tab 2012-07-12\cr
 License: \tab GPL (>= 2)\cr
 LazyLoad: \tab yes\cr
 }
@@ -32,7 +32,7 @@ Usually, the basic inputs for the most of the functions are a vector of categori
 
 The function \link{plot.transiogram} allows to plot one-dimensional transiograms, while \link{image.multi.tpfit} permit to draw transition probability maps. A powerful tool to explore graphically the anisotropy of such process is given by the function \link{imgMultiTransiogram}, which draws "quasi-empirical" transition probability maps.
 
-Simulation methods are based on Indicator Cokriging (\link{ck.sim}), Fixed or Random Path algorithms (\link{path.sim}) and Multinomial Categorical Simulation technique (\link{mcs.sim}).
+Simulation methods are based on Indicator Kriging (\link{ik.sim}), Indicator Cokriging (\link{ck.sim}), Fixed or Random Path algorithms (\link{path.sim}) and Multinomial Categorical Simulation technique (\link{mcs.sim}).
 }
 
 \author{

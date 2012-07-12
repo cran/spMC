@@ -44,4 +44,3 @@ function(data, coords, tolerance = pi/8, rotation = NULL, mle = FALSE) {
   class(res) <- "multi.tpfit"
   return(res)
 }
-

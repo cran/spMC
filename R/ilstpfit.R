@@ -95,7 +95,9 @@ function(data, coords, direction, max.dist = Inf, mpoints = 20, tolerance = pi/8
   res <- list()
   res$coefficients <- Rmat
   res$prop <- as.double(proportion)
-  colnames(res$coefficients) <- rownames(res$coefficients) <- names(res$prop)
+  names(res$prop) <- levels(data)
+  colnames(res$coefficients) <- names(res$prop)
+  rownames(res$coefficients) <- names(res$prop)
   res$tolerance <- as.double(tolerance)
   
   class(res) <- "tpfit"

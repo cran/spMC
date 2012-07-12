@@ -34,7 +34,12 @@ function(x, ..., main, legend = FALSE) {
   for(j in 1:n) {
     for(k in 1:n) {
       myseq <- na.omit(cbind(x$lags, x$Tmat[j, k, ]))
-      plot(myseq[, 1], myseq[, 2], ylab = "", xlab = "", ..., ylim = 0:1, axes = FALSE)
+      if(dim(myseq)[1] != 0) {
+        plot(myseq[, 1], myseq[, 2], ylab = "", xlab = "", ..., ylim = 0:1, axes = FALSE)
+      }
+      else {
+        plot.new()
+      }
       box()
       if (k == 1) axis(2)
       if (k == n) axis(4, .5, labels = nomi[j], tick = FALSE, font = 3)

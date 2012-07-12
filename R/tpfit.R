@@ -25,7 +25,9 @@ function(data, coords, direction, tolerance = pi/8, mle = FALSE) {
   res$coefficients <- diag(1 / ml) %*% res$coefficients
   res$prop <- table(data)
   res$prop <- as.double(res$prop / sum(res$prop))
-  colnames(res$coefficients) <- rownames(res$coefficients) <- names(res$prop)
+  names(res$prop) <- levels(data)
+  colnames(res$coefficients) <- names(res$prop)
+  rownames(res$coefficients) <- names(res$prop)
   res$tolerance <- as.double(tolerance)
   
   class(res) <- "tpfit"

@@ -2,7 +2,7 @@ imgMultiTransiogram <-
 function(data, coords, mpoints, which.dire, max.dist, tolerance = pi/8,
          main, mar, ask = TRUE, ..., nlevels = 10, contour = FALSE, rotation = NULL,
          mle = FALSE) {
-  # Plot transition probabilities matrixes 2D
+  # Plot transition probabilities matrices 2D
   # through no ellispoidal interpolation
   #
   #       data vector of data

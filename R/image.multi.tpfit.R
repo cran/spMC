@@ -1,6 +1,6 @@
 image.multi.tpfit <-
 function(x, mpoints, which.dire, max.dist, main, mar, ask = TRUE, ..., nlevels = 10, contour = TRUE) {
-  # Plot transition probabilities matrixes 2D
+  # Plot transition probabilities matrices 2D
   # through ellispoidal interpolation
   #
   #          x multi.tpfit object
