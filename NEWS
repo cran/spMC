@@ -1,0 +1,75 @@
+spMC News
+
+CHANGES IN spMC 0.3.1
+
+  NEW FEATURES:
+    o tpfit_ml(), tpfit_ils(), tpfit_me(), multi_tpfit_ml(), 
+      multi_tpfit_ils(), multi_tpfit_me() and other functions are
+      introduced for R-methods consistency (see list of deprecated
+      and defunct functions).
+
+    o multi_tpfit() and tpfit() may perform all the other estimation
+      methods by the use of the new argument method.
+
+    o sim() may simulate and predict with all the available methods.
+
+  UTILITIES:
+    o contour.pemt() display contours of the pseudo-empirical 
+      multidimensional and superpose the contour lines of the 
+      theoretical transition probabilities.
+
+    o image.pemt() plot the pseudo-empirical multidimensional 
+      transiograms, which where previously computed.
+
+    o is.pemt() tests an object if it is of the class 'pemt'.
+
+    o pemt() returns pseudo-empirical multidimensional transiograms.
+
+  DEPRECATED AND DEFUNCT:
+    o ck.sim() is defunct. Use sim_ck() instead.
+
+    o embed.MC() is defunct. Use embed_MC() instead.
+
+    o ik.sim() is defunct. Use sim_ik() instead.
+
+    o ilstpfit() and multi.ilstpfit() are defunct. 
+
+      Iterated least squares are available by the use of the functions
+      tpfit_ils() or multi_tpfit_ils().
+
+    o image.multi.tpfit() is defunct. Use image.multi_tpfit() instead.
+
+    o imgMultiTransiogram() is defunct.
+
+      Pseudo-empirical multidimensional transiograms are now computed 
+      first by the function pemt() and then plotted through 
+      image.pemt().
+
+    o is.multi.tpfit() is defunct. Use is.multi_tpfit() instead.
+
+    o is.multi.transiogram() is defunct. Use is.multi_transiogram()
+      instead.
+
+    o mcs.sim() is defunct. Use sim_mcs() instead.
+
+    o metpfit and multi.metpfit() are defunct.
+
+      Maximum entropy methods is available by the use of the functions
+      tpfit_me() or multi_tpfit_me().
+
+    o multi.tpfit() is defunct.
+
+      Multidimensional version of tpfit() is available by the use of
+      the function multi_tpfit().
+
+    o path.sim() is defunct. Use sim_path() instead.
+
+    o predict.multi.tpfit() is defunct. Use predict.multi_tpfit()
+      instead.
+
+    o print.multi.tpfit() is defunct. Use print.multi_tpfit() instead.
+
+    o print.multi.transiogram() is defunct. Use 
+      print.multi_transiogram() instead.
+
+    o which.lines() is defunct. Use which_lines().

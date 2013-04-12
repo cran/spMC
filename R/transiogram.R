@@ -25,8 +25,10 @@ function(data, coords, direction, max.dist = Inf, mpoints = 20, tolerance = pi/8
   storage.mode(direction) <- "double"
 
   # definition of bins through I(x <= vDeltaH)
-  RNG <- range(coords)
-  deltah <- min(diff(RNG), max.dist) / mpoints
+  direction <- direction / sqrt(sum(direction^2))
+  RNG <- apply(coords, 2, range)
+  dr <- sqrt(sum(diff(RNG)^2))
+  deltah <- min(dr, max.dist) / mpoints
   vDeltaH <- cumsum(rep(deltah, mpoints))
 
   # count transition occurences
@@ -47,10 +49,12 @@ function(data, coords, direction, max.dist = Inf, mpoints = 20, tolerance = pi/8
                DUP = FALSE, PACKAGE = "spMC")$empTR
   res <- list()
   res$Tmat <- array(Tcount, dim = c(nk, nk, mpoints))
-  res$Tmat <- array(res$Tmat[, , !nonComputable], dim = c(nk, nk, mpoints - sum(nonComputable)))
+  res$Tmat <- array(c(diag(, nk), res$Tmat[, , !nonComputable]),
+                    dim = c(nk, nk, mpoints - sum(nonComputable) + 1))
   colnames(res$Tmat) <- rownames(res$Tmat) <- labels
 
   res$lags <- apply(cbind(c(0, vDeltaH[-mpoints]), vDeltaH), 1, mean)[!nonComputable]
+  res$lags <- c(0, res$lags)
   res$type <- "Empirical"
   class(res) <- "transiogram"
   return(res)

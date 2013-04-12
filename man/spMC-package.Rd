@@ -20,19 +20,19 @@ The main goal of this package is to provide a set of functions for
 \tabular{ll}{
 Package: \tab spMC\cr
 Type: \tab Package\cr
-Version: \tab 0.2.4\cr
-Date: \tab 2012-07-12\cr
+Version: \tab 0.3.1\cr
+Date: \tab 2013-04-12\cr
 License: \tab GPL (>= 2)\cr
 LazyLoad: \tab yes\cr
 }
 
 Several functions are available for the stratum lengths analysis, in particular they compute the stratum lengths for each stratum category, they compute the empirical distributions and many other tools for a graphical analysis.
 
-Usually, the basic inputs for the most of the functions are a vector of categorical data and their location coordinates. They are used to estimate empirical transition probabilities (\link{transiogram}), to estimate model parameters (\link{tpfit} for one-dimensional Markov chains or \link{multi.tpfit} for multidimensional Markov chains). Once parameters are estimated, it's possible to compute theoretical transition probabilities by the use of the function \link{predict.tpfit} for one-dimensional Markov chains and \link{predict.multi.tpfit} for multidimensional ones.
+Usually, the basic inputs for the most of the functions are a vector of categorical data and their location coordinates. They are used to estimate empirical transition probabilities (\link{transiogram}), to estimate model parameters (\link{tpfit} for one-dimensional Markov chains or \link{multi_tpfit} for multidimensional Markov chains). Once parameters are estimated, it's possible to compute theoretical transition probabilities by the use of the function \link{predict.tpfit} for one-dimensional Markov chains and \link{predict.multi_tpfit} for multidimensional ones.
 
-The function \link{plot.transiogram} allows to plot one-dimensional transiograms, while \link{image.multi.tpfit} permit to draw transition probability maps. A powerful tool to explore graphically the anisotropy of such process is given by the function \link{imgMultiTransiogram}, which draws "quasi-empirical" transition probability maps.
+The function \link{plot.transiogram} allows to plot one-dimensional transiograms, while \link{image.multi_tpfit} permit to draw transition probability maps. A powerful tool to explore graphically the anisotropy of such process is given by the functions \link{pemt} and \link{image.pemt}, which let the user to draw "quasi-empirical" transition probability maps.
 
-Simulation methods are based on Indicator Kriging (\link{ik.sim}), Indicator Cokriging (\link{ck.sim}), Fixed or Random Path algorithms (\link{path.sim}) and Multinomial Categorical Simulation technique (\link{mcs.sim}).
+Simulation methods are based on Indicator Kriging (\link{sim_ik}), Indicator Cokriging (\link{sim_ck}), Fixed or Random Path algorithms (\link{sim_path}) and Multinomial Categorical Simulation technique (\link{sim_mcs}).
 }
 
 \author{

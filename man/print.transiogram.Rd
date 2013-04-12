@@ -4,7 +4,7 @@
 
 \title{Printing Theoretical or Empirical One-dimensional Transiograms}
 
-\description{The function prints transition probabilities given by \code{\link{predict.multi.tpfit}} or \code{\link{transiogram}}.}
+\description{The function prints transition probabilities given by \code{\link{predict.multi_tpfit}} or \code{\link{transiogram}}.}
 
 \usage{\method{print}{transiogram}(x, ...)}
 

@@ -40,7 +40,7 @@ summary(ACM)
 direction <- c(0,0,1)
 
 # Compute the appertaining directional line for each location
-loc.id <- which.lines(ACM[, 1:3], direction)
+loc.id <- which_lines(ACM[, 1:3], direction)
 
 # Estimate stratum lengths
 gl <- getlen(ACM$MAT3, ACM[, 1:3], loc.id, direction)
@@ -50,9 +50,9 @@ par(mfrow = c(1, 1))
 boxplot(gl)
 graphics::par(get("par.postscript", pos = 'CheckExEnv'))
 
-### Name: ck.sim
+### Name: sim_ck
 ### Title: Conditional Simulation Based on Indicator Cokriging
-### Aliases: ck.sim
+### Aliases: sim_ck
 ### Keywords: spatial distribution
 
 ### ** Examples
@@ -60,7 +60,7 @@ graphics::par(get("par.postscript", pos = 'CheckExEnv'))
 data(ACM)
 # Estimate transition rates matrices and 
 # proportions for the categorical variable MAT5
-x <- multi.tpfit(ACM$MAT5, ACM[, 1:3])
+x <- multi_tpfit(ACM$MAT5, ACM[, 1:3])
 
 # Generate the simulation grid
 mygrid <- list()
@@ -72,14 +72,14 @@ mygrid <- as.matrix(expand.grid(mygrid$X, mygrid$Y, mygrid$Z))
 # Simulate the random field through
 # Simple Indicator Cokriging algorithm and
 # optimize by Simulated Annealing
-myANSimP <- ck.sim(x, ACM$MAT5, ACM[, 1:3], mygrid, ordinary = FALSE, optype = "param", max.it = 2)
-myANSimF <- ck.sim(x, ACM$MAT5, ACM[, 1:3], mygrid, ordinary = FALSE, optype = "fullprobs", max.it = 2)
+myANSimP <- sim_ck(x, ACM$MAT5, ACM[, 1:3], mygrid, ordinary = FALSE, optype = "param", max.it = 2)
+myANSimF <- sim_ck(x, ACM$MAT5, ACM[, 1:3], mygrid, ordinary = FALSE, optype = "fullprobs", max.it = 2)
 
 # Simulate the random field through
 # Ordinary Indicator Cokriging algorithm and
 # optimize by Genetic Algorithm
-myGASimS <- ck.sim(x, ACM$MAT5, ACM[, 1:3], mygrid, GA = TRUE, optype = "semiprobs", max.it = 2)
-myGASimC <- ck.sim(x, ACM$MAT5, ACM[, 1:3], mygrid, GA = TRUE, optype = "coordprobs", max.it = 2)
+myGASimS <- sim_ck(x, ACM$MAT5, ACM[, 1:3], mygrid, GA = TRUE, optype = "semiprobs", max.it = 2)
+myGASimC <- sim_ck(x, ACM$MAT5, ACM[, 1:3], mygrid, GA = TRUE, optype = "coordprobs", max.it = 2)
 
 ### Name: density.lengths
 ### Title: Empirical Densities Estimation of Stratum Lengths
@@ -91,8 +91,8 @@ myGASimC <- ck.sim(x, ACM$MAT5, ACM[, 1:3], mygrid, GA = TRUE, optype = "coordpr
 # Compute the empirical densities of stratum lengths
 dgl <- density(gl)
 
-### Name: embed.MC
-### Tested in multi.tpfit() during the boxplot.lengths() example
+### Name: embed_MC
+### Tested in multi_tpfit() during the boxplot.lengths() example
 
 ### Name: getlen
 ### Tested during the boxplot.lengths() example
@@ -107,9 +107,9 @@ dgl <- density(gl)
 # Plot the histograms
 hist(gl)
 
-### Name: ik.sim
+### Name: sim_ik
 ### Title: Conditional Simulation Based on Indicator Kriging
-### Aliases: ik.sim
+### Aliases: sim_ik
 ### Keywords: spatial distribution
 
 ### ** Examples
@@ -117,21 +117,21 @@ hist(gl)
 # Simulate the random field through
 # Simple Indicator Kriging algorithm and
 # optimize by Simulated Annealing
-myANSimP <- ik.sim(x, ACM$MAT5, ACM[, 1:3], mygrid, ordinary = FALSE, optype = "param", max.it = 2)
-myANSimF <- ik.sim(x, ACM$MAT5, ACM[, 1:3], mygrid, ordinary = FALSE, optype = "fullprobs", max.it = 2)
+myANSimP <- sim_ik(x, ACM$MAT5, ACM[, 1:3], mygrid, ordinary = FALSE, optype = "param", max.it = 2)
+myANSimF <- sim_ik(x, ACM$MAT5, ACM[, 1:3], mygrid, ordinary = FALSE, optype = "fullprobs", max.it = 2)
 
 # Simulate the random field through
 # Ordinary Indicator Kriging algorithm and
 # optimize by Genetic Algorithm
-myGASimS <- ik.sim(x, ACM$MAT5, ACM[, 1:3], mygrid, GA = TRUE, optype = "semiprobs", max.it = 2)
-myGASimC <- ik.sim(x, ACM$MAT5, ACM[, 1:3], mygrid, GA = TRUE, optype = "coordprobs", max.it = 2)
+myGASimS <- sim_ik(x, ACM$MAT5, ACM[, 1:3], mygrid, GA = TRUE, optype = "semiprobs", max.it = 2)
+myGASimC <- sim_ik(x, ACM$MAT5, ACM[, 1:3], mygrid, GA = TRUE, optype = "coordprobs", max.it = 2)
 
-### Name: ilstpfit
-### It will be tested during the multi.ilstpfit() example
+### Name: tpfit_ils
+### It will be tested during the multi_tpfit_ils() example
 
-### Name: image.multi.tpfit
+### Name: image.multi_tpfit
 ### Title: Images with Multidimensional Transiograms
-### Aliases: image.multi.tpfit
+### Aliases: image.multi_tpfit
 ### Keywords: spatial distribution hplot
 
 ### ** Examples
@@ -145,19 +145,31 @@ image(x, 3, max.dist=c(20,10,5), which.dire=2:3,
       mar = .7, col=rev(heat.colors(500)),
       breaks=0:500/500, nlevels = 5)
 
-### Name: imgMultiTransiogram
+### Name: image.pemt (is.pemt)
 ### Title: Images with Pseudo-empirical Multidimensional Transiograms
 ### Aliases: imgMultiTransiogram
 ### Keywords: spatial distribution hplot
 
 ### ** Examples
 
+# Compute a 2-D section of a pseudo-empirical
+# multidimensional transiogram
+psEmpTr <- pemt(ACM$MAT3, ACM[, 1:3], 2,
+                max.dist = c(20, 10, 5), 
+                which.dire=c(1, 3), 
+                mle = TRUE)
+
+# Contour plots of 2-D pseudo-empirical 
+# sections of multidimensional transiograms
+contour(psEmpTr, mar = .7)
+
 # Plot 2-D pseudo-empirical sections of
 # a multidimensional transiogram
-imgMultiTransiogram(ACM$MAT3, ACM[, 1:3], 3, 
-      max.dist=c(20, 10, 5), which.dire=c(1, 3),
-      col = rev(heat.colors(500)), breaks = 0:500 / 500,
-      mar = .7, mle = TRUE)
+image(psEmpTr, col = rev(heat.colors(500)), 
+      breaks = 0:500 / 500, mar = .7)
+
+# Test the object psEmpTr
+is.pemt(psEmpTr)
 
 ### Name: is.lengths
 ### Title: Object test for lengths class
@@ -169,19 +181,19 @@ imgMultiTransiogram(ACM$MAT3, ACM[, 1:3], 3,
 # Test the object gl
 is.lengths(gl)
 
-### Name: is.multi.tpfit
-### Title: Object test for multi.tpfit class
-### Aliases: is.multi.tpfit
+### Name: is.multi_tpfit
+### Title: Object test for multi_tpfit class
+### Aliases: is.multi_tpfit
 ### Keywords: spatial attribute
 
 ### ** Examples
 
 # Test the object x
-is.multi.tpfit(x)
+is.multi_tpfit(x)
 
-### Name: is.multi.transiogram
-### Title: Object test for multi.transiogram class
-### Aliases: is.multi.transiogram
+### Name: is.multi_transiogram
+### Title: Object test for multi_transiogram class
+### Aliases: is.multi_transiogram
 ### Keywords: spatial attribute
 
 ### ** Examples
@@ -196,7 +208,7 @@ lags <- as.matrix(lags)
 TrPr <- predict(x, lags)
 
 # Test the object TrPr
-is.multi.transiogram(TrPr)
+is.multi_transiogram(TrPr)
 
 ### Name: is.tpfit
 ### Title: Object test for tpfit class
@@ -230,18 +242,18 @@ ETPr <- transiogram(ACM$MAT5, ACM[, 1:3], c(0, 0, 1), 200, 20)
 is.transiogram(TTPr)
 is.transiogram(ETPr)
 
-### Name: mcs.sim
+### Name: sim_mcs
 ### Title: Multinomial Categorical Simulation
-### Aliases: mcs.sim
+### Aliases: sim_mcs
 ### Keywords: spatial distribution
 
 ### ** Examples
 
 # Simulate the random field
-myMCSim <- mcs.sim(x, ACM$MAT5, ACM[, 1:3], mygrid)
+myMCSim <- sim_mcs(x, ACM$MAT5, ACM[, 1:3], mygrid)
 
 ### Name: metpfit
-### It will be tested during the multi.metpfit() example
+### It will be tested during the multi_tpfit_me() example
 
 ### Name: mixplot
 ### Title: Plot of Multiple One-dimensional Transiograms
@@ -265,50 +277,50 @@ TPr <- predict(RTm, lags = ETr$lags)
 mixplot(list(ETr, TPr), type = c("p", "l"), pch = "+", col = c(3, 1))
 
 ### Name: mlen
-### Tested in multi.tpfit() during the boxplot.lengths() example
+### Tested in multi_tpfit() during the boxplot.lengths() example
 
-### Name: multi.ilstpfit
+### Name: multi_tpfit_ils
 ### Title: Iterated Least Squares Method for Multidimensional Model
 ###   Parameters Estimation
-### Aliases: multi.ilstpfit
+### Aliases: multi_tpfit_ils
 ### Keywords: spatial distribution models
 
 ### ** Examples
 
 # Estimate the parameters of a 
 # multidimensional MC model
-multi.ilstpfit(ACM$MAT3, ACM[, 1:3], 100)
+multi_tpfit_ils(ACM$MAT3, ACM[, 1:3], 100)
 
-### Name: multi.metpfit
+### Name: multi_tpfit_me
 ### Title: Maximum Entropy Method for Multidimensional Model Parameters
 ###   Estimation
-### Aliases: multi.metpfit
+### Aliases: multi_tpfit_me
 ### Keywords: spatial distribution models
 
 ### ** Examples
 
 # Estimate transition rates matrices and
 # proportions for the categorical variable MAT3
-multi.metpfit(ACM$MAT3, ACM[, 1:3])
+multi_tpfit_me(ACM$MAT3, ACM[, 1:3])
 
-### Name: multi.tpfit
-### Tested during the ck.sim() example
+### Name: multi_tpfit
+### Tested during the sim_ck() example
 
-### Name: path.sim
+### Name: sim_path
 ### Title: Conditional Simulation Based on Path Algorithms
-### Aliases: path.sim
+### Aliases: sim_path
 ### Keywords: spatial distribution
 
 ### ** Examples
 
 # Simulate the random field through
 # the fixed path algorithm
-myFixPathSim <- path.sim(x, ACM$MAT5, ACM[, 1:3], mygrid,
+myFixPathSim <- sim_path(x, ACM$MAT5, ACM[, 1:3], mygrid,
                          radius = 50, fixed = TRUE)
 
 # Simulate the random field through
 # the random path algorithm
-myRndPathSim <- path.sim(x, ACM$MAT5, ACM[, 1:3], mygrid, radius = 50)
+myRndPathSim <- sim_path(x, ACM$MAT5, ACM[, 1:3], mygrid, radius = 50)
 
 ### Name: plot.density.lengths
 ### Title: Plot Empirical Densities Estimates of Stratum Lengths
@@ -358,8 +370,8 @@ plot(ETr, type = "l")
 # Plot theoretical transition probabilities
 plot(TPr, type = "l")
 
-### Name: predict.multi.tpfit
-### Tested during the is.multi.transiogram() example
+### Name: predict.multi_tpfit
+### Tested during the is.multi_transiogram() example
 
 ### Name: predict.tpfit
 ### Tested during the is.transiogram() example
@@ -384,10 +396,10 @@ print(dgl)
 # Print stratum lengths
 print(gl)
 
-### Name: print.multi.tpfit
+### Name: print.multi_tpfit
 ### Title: Printing Model Parameters for Multidimensional Continuos Lag
 ###   Spatial MC
-### Aliases: print.multi.tpfit
+### Aliases: print.multi_tpfit
 ### Keywords: spatial
 
 ### ** Examples
@@ -395,9 +407,9 @@ print(gl)
 # Print results
 print(x)
 
-### Name: print.multi.transiogram
+### Name: print.multi_transiogram
 ### Title: Printing Theoretical Multidimensional Transiograms
-### Aliases: print.multi.transiogram
+### Aliases: print.multi_transiogram
 ### Keywords: spatial
 
 ### ** Examples
@@ -444,12 +456,12 @@ print(ETPr)
 ### Tested during the print.summary.lengths() example
 
 ### Name: tpfit
-### Tested in multi.tpfit() during the boxplot.lengths() example
+### Tested in multi_tpfit() during the boxplot.lengths() example
 
 ### Name: transiogram
 ### Tested during the is.transiogram() example
 
-### Name: which.lines
+### Name: which_lines
 ### Tested during the boxplot.lengths() example
 
 ### * <FOOTER>

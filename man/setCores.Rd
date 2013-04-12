@@ -4,7 +4,7 @@
 
 \title{Set the number of CPU cores for HPC}
 
-\description{The function set the number of CPU cores for parallel computation by the use of OpenMP library (\url{http://openmp.org/}).}
+\description{The function set the number of CPU cores for parallel computation by the use of OpenMP library (\url{http://openmp.org/}). If the package was not complied with the library OpenMP (>= 3.0), this function is disabled.}
 
 \usage{setCores(n)}
 
@@ -13,10 +13,10 @@
 }
 
 \details{
-When the package is loaded, all CPU cores are used by default! 
+When the package is loaded, only one CPU core is used.
 }
 
-\value{A message will be displayed. No values are returned.}
+\value{The total number of CPU cores in use will be returned and a message will be displayed. If the package was not complied with the library OpenMP (>= 3.0), the value one will be returned.}
 
 \references{SunTM ONE Studio 8 (2003) \emph{OpenMP API User's Guide}. Sun Microsystems Inc., Santa Clara, U.S.A.}
 

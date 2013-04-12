@@ -4,7 +4,7 @@ function(data, coords, loc.id, direction, mle = FALSE) {
   #
   #      data vector of data or 
   #    coords matrix of coordinates
-  #    loc.id location Id (which.lines output)
+  #    loc.id location Id (which_lines output)
   # direction vector (or versor) of choosen direction
   #       mle logical value, if TRUE the MLEs will be returned (log-normal distro assumed)
   
@@ -20,7 +20,7 @@ function(data, coords, loc.id, direction, mle = FALSE) {
                     sdlog = exp(param[gl$categories + nk]))
       pls <- plnorm(gl$length, meanlog = param[gl$categories],
                     sdlog = exp(param[gl$categories + nk]))
-      return(- sum(log(abs(pus - pls))))
+      return(- sum(log(abs(pus - pls) + .Machine$double.neg.eps)))
     }
 
     res <- nlminb(param, NegLik, lower = -Inf, upper = Inf)

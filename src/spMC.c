@@ -1,4 +1,4 @@
-#if defined _OPENMP && !defined __APPLE__
+#if defined _OPENMP
   #if (_OPENMP > 200800)
     #include <omp.h>
     #define __VOPENMP 1
@@ -13,6 +13,7 @@
 #include <Rmath.h>
 #include <Rinternals.h>
 #include <R_ext/Lapack.h>
+#include <R_ext/Boolean.h>
 #include "spMC.h"
 
 int *wo = NULL, *pv = NULL;
@@ -90,17 +91,19 @@ void transCount(int *n, int *data, int *nc, double *coords, double *dire, double
           ToF &= (p[j] <= d[j] + fabs(*tolerance));
         }
       }
-      for (i = 0; i < *mpoints; i++) {
-        if ((ToF != 0) && (p[0] <= bins[i])) {
+      if (ToF != 0) {
+        for (i = 0; i < *mpoints; i++) {
+          if (p[0] <= bins[i]) {
 #if __VOPENMP
-          #pragma omp critical 
-          {
+            #pragma omp critical
+            {
 #endif
-            ++trans[data[x] - 1 + *nk * (data[xh] - 1) + (int) (R_pow_di(*nk, 2) * i)];
+              ++trans[data[x] - 1 + *nk * (data[xh] - 1) + *nk * *nk * i];
 #if __VOPENMP
+            }
+#endif
+            break;
           }
-#endif
-          break;
         }
       }
 
@@ -501,10 +504,10 @@ void jointProbs(int *hmany, int *nk, int *ndata, double *Tmat, double *pProbs) {
     pProbs[j] = 1.0;
     for (i = 0; i < *hmany; i++) {
       if (!i) {
-        pProbs[j] = pProbs[j] * Tmat[(int) R_pow_di(*nk , 2) * i + ndata[i] - 1 + *nk * j];
+        pProbs[j] = pProbs[j] * Tmat[*nk * *nk * i + ndata[i] - 1 + *nk * j];
       }
       else {
-        pProbs[j] = pProbs[j] * Tmat[(int) R_pow_di(*nk , 2) * i + j + *nk * (ndata[i] - 1)];
+        pProbs[j] = pProbs[j] * Tmat[*nk * *nk * i + j + *nk * (ndata[i] - 1)];
       }
     }
   }
@@ -550,6 +553,18 @@ void tsimCate(int *nk, int *n, double *prhat, int *initSim) {
     }
   }
   PutRNGstate();
+}
+
+SEXP isOmp() {
+  SEXP ans;
+  PROTECT(ans = allocVector(LGLSXP, 1));
+  #if __VOPENMP
+    LOGICAL(ans)[0] = TRUE;
+  #else
+    LOGICAL(ans)[0] = FALSE;
+  #endif
+  UNPROTECT(1);
+  return ans;
 }
 
 void getNumCores(int *n) {

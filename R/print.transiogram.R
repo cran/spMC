@@ -6,4 +6,5 @@ function(x, ...) {
     print(x$Tmat[,,i], ...)
     if(i != mylen) cat("\n")
   }
+  invisible(x)
 }

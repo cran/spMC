@@ -10,5 +10,5 @@ function(x, ...) {
     print(proportions, ...)
     cat("\n")
   }
+  invisible(x)
 }
-

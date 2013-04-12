@@ -14,7 +14,7 @@ function(n) {
   crTot <- 0L
   n <- .C('getNumSlaves', n = as.integer(n), DUP = FALSE, PACKAGE = "spMC")$n
   if (n == 1L) {
-    message("Parallel computation will not perform. CPU cores in use: 1.")
+    if (.Call("isOmp", PACKAGE = "spMC")) message("Parallel computation will not perform. CPU cores in use: 1.")
   }
   else if (n > 1L){
     crTot <- .C('getNumCores', n = as.integer(crTot), DUP = FALSE, PACKAGE = "spMC")$n

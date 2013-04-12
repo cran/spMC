@@ -11,12 +11,12 @@
 \arguments{
 %%        data vector of data
 %%      coords matrix of coordinates
-%%      loc.id location Id (which.lines output)
+%%      loc.id location Id (which_lines output)
 %%   direction vector (or versor) of chosen direction
 %%         mle logical value, if TRUE the MLEs will be returned (log-normal distro assumed)
   \item{data}{a categorical data vector of length \eqn{n}{n}.}
   \item{coords}{an \eqn{n \times d}{n x d} matrix where each row denotes the \eqn{d}{d}-D coordinates of data locations.}
-  \item{loc.id}{a vector of \eqn{n}{n} values which indicates the directional line of each location. It is usually the output of the function \code{\link{which.lines}}.}
+  \item{loc.id}{a vector of \eqn{n}{n} values which indicates the directional line of each location. It is usually the output of the function \code{\link{which_lines}}.}
   \item{direction}{a \eqn{d}{d}-D numerical vector (or versor) which represents the chosen direction.}
   \item{mle}{a logical value. If \code{TRUE}, the maximum likelihood mean lengths will be computed, otherwise the arithmetic mean is performed. It is \code{FALSE} by default.}
 }
@@ -37,14 +37,14 @@ Sartore, L. (2010) Geostatistical models for 3-D data. M.Phil. thesis, Ca' Fosca
 
 \author{Luca Sartore \email{drwolf85@gmail.com}}
 
-\seealso{\code{\link{which.lines}}}
+\seealso{\code{\link{which_lines}}}
 
 \examples{\donttest{
 data(ACM)
 direction <- c(0,0,1)
 
 # Compute the appartaining directional line for each location
-loc.id <- which.lines(ACM[, 1:3], direction)
+loc.id <- which_lines(ACM[, 1:3], direction)
 
 # Estimate the mean lengths for each observed category
 ml <- mlen(ACM$MAT5, ACM[, 1:3], loc.id, direction)

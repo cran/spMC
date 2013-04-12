@@ -34,7 +34,7 @@ Sartore, L. (2010) Geostatistical models for 3-D data. M.Phil. thesis, Ca' Fosca
 %%%%  ~~further notes~~
 %%}
 
-\seealso{\code{\link{tpfit}}, \code{\link{predict.tpfit}}, \code{\link{mixplot}}, \code{\link{image.multi.tpfit}}, \code{\link{plot}}}
+\seealso{\code{\link{tpfit}}, \code{\link{predict.tpfit}}, \code{\link{mixplot}}, \code{\link{image.multi_tpfit}}, \code{\link{plot}}}
 
 \examples{\donttest{
 data(ACM)

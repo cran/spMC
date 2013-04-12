@@ -10,5 +10,6 @@ function(x, ...) {
     print(x$length[i == x$categories], ...)
     if (i != last) cat("\n")
   }
+  invisible(x)
 }
 

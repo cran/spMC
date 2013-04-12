@@ -1,8 +1,8 @@
 Package: spMC
 Type: Package
 Title: Continuous Lag Spatial Markov Chains
-Version: 0.2.4
-Date: 2012-07-12
+Version: 0.3.1
+Date: 2013-04-12
 Author: Luca Sartore
 Maintainer: Luca Sartore <drwolf85@gmail.com>
 Description: The main goal of this package is to provide a set of
@@ -16,6 +16,7 @@ Depends: R (>= 2.15.0), base, methods, datasets, utils, grDevices,
         graphics, stats
 License: GPL (>= 2)
 LazyLoad: yes
-Packaged: 2012-07-12 18:58:25 UTC; root
+Packaged: 2013-04-15 07:16:35 UTC; root
+NeedsCompilation: yes
 Repository: CRAN
-Date/Publication: 2012-07-13 06:56:56
+Date/Publication: 2013-04-15 10:20:34

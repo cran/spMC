@@ -11,12 +11,12 @@
 \arguments{
 %%         data vector of data
 %%       coords matrix of coordinates
-%%       loc.id location Id (which.lines output)
+%%       loc.id location Id (which_lines output)
 %%    direction vector (or versor) of choosen direction
 %% zero.allowed logical, it allows zero stratum lengths
   \item{data}{a categorical data vector of length \eqn{n}{n}.}
   \item{coords}{an \eqn{n \times d}{n x d} matrix where each row denotes the \eqn{d}{d}-D coordinates of data locations.}
-  \item{loc.id}{a vector of \eqn{n}{n} values which indicates the directional line of each location. It is usually the output of the function \code{\link{which.lines}}.}
+  \item{loc.id}{a vector of \eqn{n}{n} values which indicates the directional line of each location. It is usually the output of the function \code{\link{which_lines}}.}
   \item{direction}{a \eqn{d}{d}-D numerical vector (or versor) which represents the chosen direction.}
   \item{zero.allowed}{a logical value which allows to return zero stratum lengths. It is \code{FALSE} by default.}
 }
@@ -39,14 +39,14 @@ Sartore, L. (2010) Geostatistical models for 3-D data. M.Phil. thesis, Ca' Fosca
 
 \author{Luca Sartore \email{drwolf85@gmail.com}}
 
-\seealso{\code{\link{mlen}}, \code{\link{which.lines}}}
+\seealso{\code{\link{mlen}}, \code{\link{which_lines}}}
 
 \examples{\donttest{
 data(ACM)
 direction <- c(0,0,1)
 
 # Compute the appertaining directional line for each location
-loc.id <- which.lines(ACM[, 1:3], direction)
+loc.id <- which_lines(ACM[, 1:3], direction)
 
 # Estimate stratum lengths
 gl <- getlen(ACM$MAT5, ACM[, 1:3], loc.id, direction)

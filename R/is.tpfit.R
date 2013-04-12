@@ -8,4 +8,3 @@ function(object) {
   if(!is.numeric(object$tolerance)) return(FALSE)
   return(TRUE)
 }
-

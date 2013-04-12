@@ -10,5 +10,6 @@ function (x, ...) {
     print(x[[i]], ...)
     if (i != n) cat("\n")
   }
+  invisible(x)
 }
 

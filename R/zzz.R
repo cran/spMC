@@ -1,4 +1,14 @@
 .onLoad <- function(lib, pkg) {
-       nn <- setCores(1L)
-       if (nn > 0L) packageStartupMessage("\nUse the function setCores() to change the number of CPU cores.")
+       .C('setNumSlaves', n = as.integer(1L), DUP = FALSE, PACKAGE = "spMC")
+}
+
+.onAttach <- function(lib, pkg) {
+       if (.Call("isOmp", PACKAGE = "spMC")) {
+           packageStartupMessage("Package built with openMP.")
+       }
+       else {
+           packageStartupMessage("Package built without openMP.")
+       }
+       nn <- setCores()
+       if (nn > 0L) packageStartupMessage("Use the function setCores() to change the number of CPU cores.")
 }

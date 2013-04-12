@@ -35,7 +35,7 @@ Sartore, L. (2010) Geostatistical models for 3-D data. M.Phil. thesis, Ca' Fosca
 
 \author{Luca Sartore \email{drwolf85@gmail.com}}
 
-\seealso{\code{\link{tpfit}}, \code{\link{print.tpfit}}, \code{\link{plot.transiogram}}, \code{\link{transiogram}}, \code{\link{multi.tpfit}}}
+\seealso{\code{\link{tpfit}}, \code{\link{print.tpfit}}, \code{\link{plot.transiogram}}, \code{\link{transiogram}}, \code{\link{multi_tpfit}}}
 
 \examples{\donttest{
 data(ACM)

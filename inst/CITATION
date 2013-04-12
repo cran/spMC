@@ -1,0 +1,13 @@
+bibentry("Manual",
+         title  = "spMC: Continuous Lag Spatial Markov Chains",
+         author = packageDescription("spMC", fields = "Author"),
+         year   = strsplit(packageDescription("spMC", fields = "Date"), "-")[[1L]][1L],
+         note   = paste("R package version", packageDescription("spMC", fields = "Version")),
+         textVersion = 
+         paste(packageDescription("spMC", fields = "Author"),
+               " (", strsplit(packageDescription("spMC", fields = "Date"), "-")[[1L]][1L], "). ", 
+               "spMC: Continuous Lag Spatial Markov Chains. ",
+               "R package version ", packageDescription("spMC", fields = "Version"), 
+               ".", sep=""),
+
+         header = gettextf("To cite package %s in publications use:", sQuote("spMC")))

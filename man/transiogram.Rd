@@ -48,8 +48,8 @@ data(ACM)
 
 # Estimate empirical transition 
 # probabilities by points
-transiogram(ACM$MAT3, ACM[, 1:3], c(0, 0, 1), 200, 5)}
-}
+transiogram(ACM$MAT3, ACM[, 1:3], c(0, 0, 1), 200, 5)
+}}
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
 \keyword{spatial}

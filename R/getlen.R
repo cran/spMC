@@ -4,7 +4,7 @@ function(data, coords, loc.id, direction, zero.allowed = FALSE) {
   #
   #         data vector of data
   #       coords matrix of coordinates
-  #       loc.id location Id (which.lines output)
+  #       loc.id location Id (which_lines output)
   #    direction vector (or versor) of choosen direction
   # zero.allowed logical, it allows zero stratum lengths
 

@@ -8,5 +8,6 @@ function (x, digits = NULL, ...) {
         formatC(x[[i]]$bw, digits = digits), "\n\n", sep = "")
     print(summary(as.data.frame(x[[i]][c("x", "y")])), digits = digits, ...)
   }
+  invisible(x)
 }
 

@@ -1,36 +1,25 @@
 tpfit <-
-function(data, coords, direction, tolerance = pi/8, mle = FALSE) {
+function(data, coords, direction, method = "ml", tolerance = pi/8, max.it = 9000, mle = FALSE, ...) {
   # Estimation for matrix of transition rates
-  #          ( Mean Length Method )
   #
   #       data vector of data
   #     coords coordinates matrix
   #  direction vector (or versor) of choosen direction
+  #     method estimation method c("ml", "ils", "me")
   #  tolerance angle tolerance (in radians)
-  #        mle logical value to pass to the function mlen
+  #     max.it maximum number of iterations for the optimization (used only for the 'me' method)
+  #        mle logical value to pass to the function mlen (not used for the 'ils' method)
+  #        ... further arguments to pass to tpfit_ils function, such as:
+  #    #     * max.dist maximum distance for counting
+  #    #     *  mpoints number of lags
+  #    #     *        q constant greater than one controlling the growth of rho
+  #    #     *     echo logical value to print the optimization output
+  #    #     *      ... further arguments to pass to nlminb function
+  #    #     *    tpfit tpfit object for a further optimization
 
-  if (!is.factor(data)) data <- as.factor(data)
-  if (!is.matrix(coords)) coords <- as.matrix(coords)
-  n <- dim(coords)[1]
-  nc <- dim(coords)[2]
-  if (length(direction) != nc) stop("wrong length of direction vector")
-  nl <- nlevels(data)
-  if (n < (nl^2 + nl)) stop("there are not enough data to estimate the parameters")
+  if (method == "ils") return(tpfit_ils(data = data, coords = coords, direction = direction, tolerance = tolerance, ...))
+  if (method == "me") return(tpfit_me(data, coords, direction, tolerance, max.it, mle))
+  if (method != "ml") warning("Estimation method not recognized. Mean length method (\"ml\") set by default.")
 
-  loc.id <- which.lines(coords, direction, tolerance)
-  ml <- mlen(data, coords, loc.id, direction, mle)
-  res <- list()
-  res$coefficients <- embed.MC(data, coords, loc.id, direction)
-  diag(res$coefficients) <- -1
-  res$coefficients <- diag(1 / ml) %*% res$coefficients
-  res$prop <- table(data)
-  res$prop <- as.double(res$prop / sum(res$prop))
-  names(res$prop) <- levels(data)
-  colnames(res$coefficients) <- names(res$prop)
-  rownames(res$coefficients) <- names(res$prop)
-  res$tolerance <- as.double(tolerance)
-  
-  class(res) <- "tpfit"
-  return(res)
+  return(tpfit_ml(data, coords, direction, tolerance, mle))
 }
-
