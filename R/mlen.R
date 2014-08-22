@@ -1,15 +1,35 @@
 mlen <-
-function(data, coords, loc.id, direction, mle = FALSE) {
+function(data, coords, loc.id, direction, mle = "trm") {
   # Empirical estimation mean-lengths (for embeded data)
   #
   #      data vector of data or 
   #    coords matrix of coordinates
   #    loc.id location Id (which_lines output)
-  # direction vector (or versor) of choosen direction
-  #       mle logical value, if TRUE the MLEs will be returned (log-normal distro assumed)
-  
-  if (mle) {
-    gl <- getlen(data, coords, loc.id, direction, TRUE)
+  # direction vector (orres versor) of choosen direction
+  #       mle string of characters, 
+  #           if "mlk" the MLEs will be returned (log-normal distro assumed)
+  #           it can be logical for backward compatibility reasons
+
+  mle <- mle[1L]
+  if (is.logical(mle)) {
+    mle <- ifelse(mle, "mlk", "avg") 
+  }
+  else {
+    if (is.character(mle)) {
+      if (!mle %in% c("avg", "mlk", "trm", "mdn")) mle <- "trm"      
+    }
+    else {
+      mle <- "trm"
+    }
+  }
+  # Mean-Length Estimation via method of moments (averaging)
+  if (mle == "avg") {
+    gl <- getlen(data, coords, loc.id, direction, zero.allowed = TRUE)
+    meanlen <- tapply(gl$length, gl$categories, mean)
+  }
+  # Mean-Length Estimation via maximum likelihood (log-normal distribution)
+  if (mle == "mlk") {
+    gl <- getlen(data, coords, loc.id, direction, zero.allowed = TRUE)
     nk <- nlevels(data)
     if (length(data) < nk) stop("there are not enough data to estimate the parameters")
     param <- vector("numeric", 2 * nk)
@@ -27,32 +47,23 @@ function(data, coords, loc.id, direction, mle = FALSE) {
     message("Optimization message: ", res$message, sep = "")
     meanlen <- exp(res$par[1:nk] + 0.5 * exp(2 * res$par[(nk + 1):(2 * nk)]))
   }
-  else {
-    if (!is.matrix(coords)) coords <- as.matrix(coords)
-    nc <- dim(coords)[2]
-    if (length(direction) != nc) stop("wrong length of direction vector")
-    if (!is.factor(data)) data <- as.factor(data)
-    nk <- nlevels(data)
-    n <- length(data)
-    if (n < nk) stop("there are not enough data to estimate the parameters")
-    if (n != dim(coords)[1]) stop("the number of data is not equal to the number of coordinates")
-    if (n != length(loc.id)) stop("length of \"loc.id\" must be equal to the data length")
-    storage.mode(coords) <- "double"
-    storage.mode(loc.id) <- "integer"
-
-    ord <- order(abs(direction), decreasing = TRUE)
-    ord <- cbind(loc.id, coords[, ord])
-    ord <- lapply(apply(ord, 2, list), unlist)
-    ord <- do.call("order", ord)
-    data <- data[ord]
-    loc.id <- loc.id[ord]
-    coords <- coords[ord, ]
-
-    meanlen <- .C('cEmbedOc', n = as.integer(n), nc = as.integer(nc), nk = as.integer(nk),
-                  coords = as.double(coords), locId = as.integer(loc.id),
-                  data = as.integer(data), emoc = as.integer(vector("integer", nk)),
-                  tlen = as.double(vector("numeric", nk)), DUP = FALSE, PACKAGE = "spMC")$tlen
+# Mean-Length Estimation via trimmed averaging
+  if (mle == "trm") {
+    gl <- getlen(data, coords, loc.id, direction, zero.allowed = FALSE)
+    meanlen <- tapply(gl$length, gl$categories, mean)
   }
-  names(meanlen) <- levels(data)
+# Mean-Length Estimation via trimmed median calculation
+  if (mle == "mdn") {
+    gl <- getlen(data, coords, loc.id, direction, zero.allowed = FALSE)
+    meanlen <- tapply(gl$length, gl$categories, median)
+  }
+  iiff <- is.finite(meanlen)
+  zzzz <- meanlen[iiff] <= 0
+  if (!all(iiff) || any(zzzz)) {
+    stdlen <- apply(coords, 2, function(x) mean(diff(sort(unique(x)))))
+    stdlen <- sqrt(sum(abs(direction) / sqrt(sum(direction^2)) * stdlen^2))
+    meanlen[!iiff] <- stdlen
+    meanlen[iiff][zzzz] <- stdlen
+  }
   return(meanlen)
 }

@@ -61,7 +61,7 @@ void transCount(int *n, int *data, int *nc, double *coords, double *dire, double
   }
 #endif
 
-  if ((d = (double *) malloc(*nc * sizeof(double))) == NULL) {
+  if ((d = (double *) calloc(*nc, sizeof(double))) == NULL) {
 #if __VOPENMP
     #pragma omp critical
 #endif
@@ -119,6 +119,7 @@ void transCount(int *n, int *data, int *nc, double *coords, double *dire, double
 #if __VOPENMP
   }
 #endif
+  free(d);
 
 }
 
@@ -137,15 +138,53 @@ void transProbs(int *mpoints, int *nk, double *rwsum, double *empTR) {
   for (i = 0; i < *mpoints; i++) {
     for (j = 0; j < *nk; j++) {
       for (k = 0; k < *nk; k++) {
-        empTR[*nk * k + j + (int) (R_pow_di(*nk, 2) * i)] /= rwsum[*nk * i + j];
+        empTR[*nk * k + j + *nk * *nk * i] /= rwsum[*nk * i + j];
       }
     }
   }
 
 }
 
+void revtProbs(double *dmat, int *idim) {
+  int i, j, k, pos, cpos;
+  double tsum, tmp;
+#if __VOPENMP
+  #pragma omp parallel for default(shared) private(pos, cpos, i, j, k, tsum, tmp) schedule(static, 1)
+#endif
+  for (i = 0; i < idim[2]; i++) {
+    pos = *idim * *idim * i;
+    for (j = 0; j < *idim; j++) {
+      cpos = pos + *idim * j;
+      for (k = 0, tsum = 0.0; k < *idim; k++) { // transposition
+        tmp = dmat[cpos + k];
+        tsum += tmp;
+        if (k > j) {
+          dmat[cpos + k] = dmat[pos + *idim * k + j];
+          dmat[pos + *idim * k + j] = tmp;
+        }
+      }
+      for (k = 0; k < *idim; k++) { // normalisation
+        dmat[pos + *idim * k + j] /= tsum;
+      }
+    }
+  }
+  pos = *idim * *idim;
+#if __VOPENMP
+  #pragma omp parallel for default(shared) private(i, j, k, tmp) schedule(static, 1)
+#endif
+  for (i = 0; i < idim[2] / 2; i++) { // revert the probabilities in the array
+    k = idim[2] - i - 1;
+    for (j = 0; j < pos; j++) {
+      tmp = dmat[pos * k + j];
+      dmat[pos * k + j] = dmat[pos * i + j];
+      dmat[pos * i + j] = tmp;
+    }
+  }
+
+}
+
 void wl(int *n, int *nc, double *coords, double *dire, double *tolerance, int *id) {
-  /* Computing segments indicator  
+  /* Computing segments indicator 
           *n - sample size
          *nc - dimension of the sample space
      *coords - matrix of coordinates
@@ -153,9 +192,11 @@ void wl(int *n, int *nc, double *coords, double *dire, double *tolerance, int *i
   *tolerance - angle tolecrance in radians
          *id - location id */
 
+  // This function will be used for classifying coordinates according to a common line
   int x, xh, i, ToF, mpos;
   double mymin = 0.0, *d = NULL, *mdst = NULL;
 
+  // memory allocation of vectors needed 
 #if __VOPENMP
   #pragma omp parallel shared(nc, myMemErr)
   {
@@ -182,8 +223,9 @@ void wl(int *n, int *nc, double *coords, double *dire, double *tolerance, int *i
 #endif
     error("%s", myMemErr);
   }
-  for (i = 0; i < *nc; i++) d[i] = 0.0;
-  nsph(nc, dire, d); // polar transformation of dire
+  
+  for (i = 0; i < *nc; i++) d[i] = 0.0; // initialization of polar coordinate vector
+  nsph(nc, dire, d); // polar transformation of dire (the principal direction)
   for (x = 0; x < *n - 1; x++) { 
     if (id[x] == 0) id[x] = x + 1;
     if ((mdst = (double *) malloc((*n - x - 1) * sizeof(double))) == NULL) {
@@ -261,19 +303,40 @@ void nsph(int *di, double *x, double *res) {
 
   int i, j;
 
-  res[*di - 1] = atan(x[*di - 1] / x[*di - 2]);
-  for (i = *di - 2; i >= 0; i--) {
-    for (j = *di - 1; j >= i; j--) {
-      res[i] += R_pow_di(x[j], 2);
+  if (*di > 0 && *di < 2) *res == *x;
+//   if (*di >= 2) {
+//     res[*di - 1] = atan(x[*di - 1] / x[*di - 2]);
+//     for (i = *di - 2; i >= 0; i--) {
+//       res[i] = 0.0;
+//       for (j = *di - 1; j >= i; j--) {
+//         res[i] += x[j] * x[j];
+//       }
+//       res[i] = sqrt(res[i]);
+//       if (i != 0) res[i] = atan(res[i] / x[j]);
+//     }
+//   }
+  if (*di >= 2) { // Angles calculations
+   *res = *x * *x;
+   *res +=  x[1] * x[1];
+   res[1] = atan2(*x, x[1]); // the first angle
+    for (i = 2; i < *di; i++) {
+      *res += x[i] * x[i];
+      res[i] = acos(x[i] / sqrt(*res));
     }
-    res[i] = sqrt(res[i]);
-    if (i != 0) res[i] = atan(res[i] / x[j]);
+    // Radius computation
+    *res = sqrt(*res);
   }
+//   library(spMC)
+//   p2c <- function(x) {
+//     x[1] * c(sin(x[2]) * sin(x[3]), cos(x[2]) * sin(x[3]), cos(x[3])) 
+//   }
+//   .C("nsph", 3L, c(1,1,1), p = c(0,0,0))$p -> x
+//   p2c(x)
 
 }
 
 void cEmbedLen(int *n, int *nc, double *coords, int *locId, int *data, int *cemoc, double *maxcens, double *tlen) {
-  /* Computing strata lengths
+  /* Computing strata lengths (i.e. mean lengths)
           *n - sample size
          *nc - number of columns
      *coords - matrix of coordinates
@@ -288,17 +351,17 @@ void cEmbedLen(int *n, int *nc, double *coords, int *locId, int *data, int *cemo
 
   for (i = 1; i < *n; i++) {
     if (locId[i - 1] == locId[i] && data[i - 1] == data[i]) {
-      tmptl = R_pow_di(coords[i - 1] - coords[i], 2);
+      tmptl = pow(coords[i - 1] - coords[i], 2.0);
       for (j = 1; j < *nc; j++) {
-        tmptl += R_pow_di(coords[*n * j + i - 1] - coords[*n * j + i], 2);
+        tmptl += pow(coords[*n * j + i - 1] - coords[*n * j + i], 2.0);
       }
       tlen[inde] += sqrt(tmptl);
     }
     else {
       if (locId[i - 1] == locId[i]) {
-        tmptl = R_pow_di(coords[i - 1] - coords[i], 2);
+        tmptl = pow(coords[i - 1] - coords[i], 2.0);
         for (j = 1; j < *nc; j++) {
-          tmptl += R_pow_di(coords[*n * j + i - 1] - coords[*n * j + i], 2);
+          tmptl += pow(coords[*n * j + i - 1] - coords[*n * j + i], 2.0);
         }
         maxcens[inde] = sqrt(tmptl);
       }
@@ -354,9 +417,9 @@ void cEmbedOc(int *n, int *nc, int *nk, double *coords, int *locId, int *data, i
 #endif
       for (i = 1; i < *n; i++) {
         if (locId[i - 1] == locId[i] && data[i - 1] == data[i]) {
-          tmptl = R_pow_di(coords[i - 1] - coords[i], 2);
+          tmptl = pow(coords[i - 1] - coords[i], 2.0);
           for (j = 1; j < *nc; j++) {
-            tmptl += R_pow_di(coords[*n * j + i - 1] - coords[*n * j + i], 2);
+            tmptl += pow(coords[*n * j + i - 1] - coords[*n * j + i], 2.0);
           }
           tlen[data[i] - 1] += sqrt(tmptl);
         }
@@ -451,10 +514,10 @@ void getDst(int *nc, int *nr, double *site, double *coords, double *wgmLags) {
 #endif
   for (i = 0; i < *nr; i++) {
     wgmLags[i] = coords[i] - site[0];
-    wgmLags[*nc * *nr + i] = R_pow_di(wgmLags[i], 2);
+    wgmLags[*nc * *nr + i] = pow(wgmLags[i], 2.0);
     for (j = 1; j < *nc; j++) {
       wgmLags[*nr * j + i] = coords[*nr * j + i] - site[j];
-      wgmLags[*nc * *nr + i] += R_pow_di(wgmLags[*nr * j + i], 2);
+      wgmLags[*nc * *nr + i] += pow(wgmLags[*nr * j + i], 2.0);
     }
     wgmLags[*nc * *nr + i] = sqrt(wgmLags[*nc * *nr + i]);
   }
@@ -1903,7 +1966,7 @@ void fastrss(int *n, double *mypred, double *Tmat, double *rss) {
       vet[i] = 0.0;
     }
     else {
-      vet[i] = R_pow_di(vet[i], 2);
+      vet[i] *= vet[i];
     }
   }
   *rss = 0.0;
@@ -1977,6 +2040,7 @@ void knear(int *nc, int *nr, double *coords, int *nrs, double *grid, int *knn, i
        *coords - matrix of coordinates
           *nrs - number of simulation rows
          *grid - simulation grid
+          *knn - number of neighbours
       *indices - row indices of the nearest observations */
 
   int i, j, k;
@@ -2005,9 +2069,9 @@ void knear(int *nc, int *nr, double *coords, int *nrs, double *grid, int *knn, i
 #endif
   for (i = 0; i < *nrs; i++) {
     for (j = 0; j < *knn; j++) {
-      dst = R_pow_di(coords[j] - grid[i], 2);
+      dst = pow(coords[j] - grid[i], 2.0);
       for (k = 1; k < *nc; k++) {
-        dst += R_pow_di(coords[*nr * k + j] - grid[*nrs * k + i], 2);
+        dst += pow(coords[*nr * k + j] - grid[*nrs * k + i], 2.0);
       }
       // dst = sqrt(dst);
       p[j] = dst;
@@ -2015,9 +2079,9 @@ void knear(int *nc, int *nr, double *coords, int *nrs, double *grid, int *knn, i
     }
     rsort_with_index(p, wo, *knn);
     for (j = *knn; j < *nr; j++) {
-      dst = R_pow_di(coords[j] - grid[i], 2);
+      dst = pow(coords[j] - grid[i], 2.0);
       for (k = 1; k < *nc; k++) {
-        dst += R_pow_di(coords[*nr * k + j] - grid[*nrs * k + i], 2);
+        dst += pow(coords[*nr * k + j] - grid[*nrs * k + i], 2.0);
       }
       // dst = sqrt(dst);
       if (dst < p[*knn - 1]) {
@@ -2117,7 +2181,7 @@ void getIKPrbs(int *ordinary, int *indices, int *groups, int *knn, int *nc, int 
 #endif
       error("%s", myMemErr);
     }
-    if ((pv = (int *) malloc(*ordinary + *knn * sizeof(int))) == NULL) {
+    if ((pv = (int *) malloc((*ordinary + *knn) * sizeof(int))) == NULL) {
 #if __VOPENMP
       #pragma omp critical
 #endif
@@ -2192,7 +2256,7 @@ void getIKPrbs(int *ordinary, int *indices, int *groups, int *knn, int *nc, int 
     }
    //invert the probability matrix of the sample configuration
 #if __VOPENMP
-    #pragma omp parallel for default(shared) private(j) schedule(static, 1)
+    #pragma omp parallel for default(shared) private(j, info) schedule(static, 1)
 #endif
     for (j = 0; j < *nk; j++) {
       F77_CALL(dgesv)(knn, knn, &Ttilde[knn2 * j], knn, pv, &invTtilde[knn2 * j], knn, &info);
@@ -2404,7 +2468,7 @@ void getCKPrbs(int *ordinary, int *indices, int *groups, int *knn, int *nc, int 
 #endif
       error("%s", myMemErr);
     }
-    if ((pv = (int *) malloc(*ordinary + *knn * sizeof(int))) == NULL) {
+    if ((pv = (int *) malloc((*ordinary + *knn) * sizeof(int))) == NULL) {
 #if __VOPENMP
       #pragma omp critical
 #endif
@@ -2499,7 +2563,7 @@ void getCKPrbs(int *ordinary, int *indices, int *groups, int *knn, int *nc, int 
     //invert the probability matrix of the sample configuration
     j2 = knn2 + *ordinary * (*knn * 2 + 1);
 #if __VOPENMP
-    #pragma omp parallel for default(shared) private(j, l, j1) schedule(static, 1)
+    #pragma omp parallel for default(shared) private(j, l, j1, info) schedule(static, 1)
 #endif
     for (j = 0; j < *nk; j++) {
       for (l = 0; l < *nk; l++) {
@@ -2887,36 +2951,36 @@ void pathAlg(int *nrs, int *nrorig, int *nc, double *coords, double *grid, int *
       error("%s", myMemErr);
     }
     /* COPYING COORDINATES AND DATA */
-#if __VOPENMP
-    #pragma omp parallel for default(shared) private(j, k) schedule(static, 1)
-#endif
+// #if __VOPENMP
+//     #pragma omp parallel for default(shared) private(j, k) schedule(static, 1)
+// #endif
     for (j = 0; j < *nrorig; j++) {
       mydata[j] = data[j];
       for (k = 0; k < *nc; k++) {
         wgmLags[nr * k + j] = coords[*nrorig * k + j];  
       }
     }
-#if __VOPENMP
-    #pragma omp parallel for default(shared) private(j, k) schedule(static, 1)
-#endif
+// #if __VOPENMP
+//     #pragma omp parallel for default(shared) private(j, k) schedule(static, 1)
+// #endif
     for (j = 0; j < i; j++) {
       mydata[*nrorig + j] = pred[path[j] - 1];
       for (k = 0; k < *nc; k++) {
         wgmLags[nr * k + *nrorig + j] = grid[*nrs * k + path[j] - 1];
       }
     }
-#if __VOPENMP
-    #pragma omp parallel for default(shared) private(j) schedule(static, 1)
-#endif
+// #if __VOPENMP
+//     #pragma omp parallel for default(shared) private(j) schedule(static, 1)
+// #endif
     for (j = 0; j < *nc; j++) {
       site[j] = grid[*nrs * j + path[i] - 1];
     }
     /* COMPUTING LAGS AND DISTANCES */
     getDst(nc, &nr, site, wgmLags, wgmLags);
     /* CHECKING FOR ZERO LAGS AND LAGS WITHIN THE SEARCHING SPHERE */
-#if __VOPENMP
-    #pragma omp parallel for default(shared) private(j) schedule(static, 1) reduction(+ : zeros)
-#endif
+// #if __VOPENMP
+//     #pragma omp parallel for default(shared) private(j) schedule(static, 1) reduction(+ : zeros)
+// #endif
     for (j = 0; j < nr; j++) {
       wh[j] = j;
       if (wgmLags[*nc * nr + j] == 0.0) zeros = zeros + 1;
@@ -2929,9 +2993,9 @@ void pathAlg(int *nrs, int *nrorig, int *nc, double *coords, double *grid, int *
 #endif
         error("%s", myMemErr);
       }
-#if __VOPENMP
-      #pragma omp parallel for default(shared) private(j) schedule(static, 1)
-#endif
+// #if __VOPENMP
+//       #pragma omp parallel for default(shared) private(j) schedule(static, 1)
+// #endif
       for (j = 0; j < *nk; j++) {
         cnt[j] = 0;
       }
@@ -2955,9 +3019,9 @@ void pathAlg(int *nrs, int *nrorig, int *nc, double *coords, double *grid, int *
     else {
       /* COMPUTING NUMBER OF POINTS INSIDE THE SEARCHING SPHERE */
       nlen = 0;
-#if __VOPENMP
-      #pragma omp parallel for default(shared) private(j) schedule(static, 1) reduction(+ : nlen)
-#endif
+// #if __VOPENMP
+//       #pragma omp parallel for default(shared) private(j) schedule(static, 1) reduction(+ : nlen)
+// #endif
       for (j = 0; j < nr; j++) {
         if (wh[j] >= 0) nlen = nlen + 1;
       }
@@ -2996,29 +3060,29 @@ void pathAlg(int *nrs, int *nrorig, int *nc, double *coords, double *grid, int *
         k = 0;
         for (j = 0; j < nr; j++) {
           if (wh[j] >= 0) {
-#if __VOPENMP
-            #pragma omp parallel sections default(shared)
-            {
-              #pragma omp section
-              {
-#endif
+// #if __VOPENMP
+//             #pragma omp parallel sections default(shared)
+//             {
+//               #pragma omp section
+//               {
+// #endif
                 for (l = 0; l < *nc; l++) neighbour[nlen * l + k] = wgmLags[nr * l + j];
-#if __VOPENMP
-              }
-              #pragma omp section
-              {
-#endif
+// #if __VOPENMP
+//               }
+//               #pragma omp section
+//               {
+// #endif
                 ndata[k] = mydata[j];
-#if __VOPENMP
-              }
-              #pragma omp section
-              {
-#endif
+// #if __VOPENMP
+//               }
+//               #pragma omp section
+//               {
+// #endif
                 nbLength[k] = wgmLags[*nc * nr + j];
-#if __VOPENMP
-              }
-            }
-#endif
+// #if __VOPENMP
+//               }
+//             }
+// #endif
             ++k;
           }
         }
@@ -3042,9 +3106,9 @@ void pathAlg(int *nrs, int *nrorig, int *nc, double *coords, double *grid, int *
         for (j = 0; j < (1 << *nc); j++) {
           if (pos[j] >= 0) {
             vndata[k] = ndata[pos[j]];
-#if __VOPENMP
-            #pragma omp parallel for default(shared) private(l) schedule(static, 1)
-#endif
+// #if __VOPENMP
+//             #pragma omp parallel for default(shared) private(l) schedule(static, 1)
+// #endif
             for (l = 0; l < *nc; l++) {
               nbLength[*nc * k + l] = neighbour[nlen * l + pos[j]];
             }
@@ -3070,9 +3134,9 @@ void pathAlg(int *nrs, int *nrorig, int *nc, double *coords, double *grid, int *
           error("%s", myMemErr);
         }
         jointProbs(&np, nk, vndata, Tmat, neighbour);
-#if __VOPENMP
-        #pragma omp parallel for default(shared) private(j) schedule(static, 1)
-#endif
+// #if __VOPENMP
+//         #pragma omp parallel for default(shared) private(j) schedule(static, 1)
+// #endif
         for (j = 0; j < *nk; j++) prhat[*nrs * j + path[i] - 1] = neighbour[j];
         free(Tmat);
         free(vndata);
@@ -3081,9 +3145,9 @@ void pathAlg(int *nrs, int *nrorig, int *nc, double *coords, double *grid, int *
       }
       else {
         /* COMPUTING PROBABILITIES IF NO NEIGHBOURS ARE FOUND */
-#if __VOPENMP
-        #pragma omp parallel for default(shared) private(j) schedule(static, 1)
-#endif
+// #if __VOPENMP
+//         #pragma omp parallel for default(shared) private(j) schedule(static, 1)
+// #endif
         for (j = 0; j < *nk; j++) prhat[*nrs * j + path[i] - 1] = prop[j];
       }
 

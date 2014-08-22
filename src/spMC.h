@@ -1,5 +1,6 @@
 void transCount(int *, int *, int *, double *, double *, double *, int *, double *, int *, double *);
 void transProbs(int *, int *, double *, double *);
+void revtProbs(double *, int *);
 void wl(int *, int *, double *, double *, double *, int *);
 void nsph(int *, double *, double *);
 void cEmbedLen(int *, int *, double *, int *, int *, int *, double *, double *);

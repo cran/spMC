@@ -1,5 +1,5 @@
 tpfit_ml <-
-function(data, coords, direction, tolerance = pi/8, mle = FALSE) {
+function(data, coords, direction, tolerance = pi/8, mle = "trm") {
   # Estimation for matrix of transition rates
   #          ( Mean Length Method )
   #
@@ -7,7 +7,7 @@ function(data, coords, direction, tolerance = pi/8, mle = FALSE) {
   #     coords coordinates matrix
   #  direction vector (or versor) of choosen direction
   #  tolerance angle tolerance (in radians)
-  #        mle logical value to pass to the function mlen
+  #        mle argument to pass to the function tpfit
 
   if (!is.factor(data)) data <- as.factor(data)
   if (!is.matrix(coords)) coords <- as.matrix(coords)

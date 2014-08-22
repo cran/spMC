@@ -35,7 +35,7 @@ function(x, data, coords, grid, knn = NULL) {
   dire.mat <- diag(, nc)
   if (!is.null(x$rotation)) {
     dire.mat <- .C('rotaxes', nc = as.integer(nc), ang = as.double(x$rotation),
-                   res = as.double(dire.mat), DUP = FALSE, PACKAGE = "spMC")$res
+                   res = as.double(dire.mat), PACKAGE = "spMC")$res
     dire.mat <- matrix(dire.mat, nc, nc)
   }
   if (is.null(knn)) {
@@ -46,7 +46,7 @@ function(x, data, coords, grid, knn = NULL) {
                 nk = as.integer(nk), ndata = as.integer(data),
                 coefs = as.double(unlist(x$coefficients)), matdir = as.double(dire.mat),
                 rota = as.integer(!is.null(x$rotation)), pProbs = as.double(prhat),
-                DUP = FALSE, PACKAGE = "spMC")$pProbs
+                PACKAGE = "spMC")$pProbs
   }
   else {
     new.coords <- coords
@@ -55,18 +55,18 @@ function(x, data, coords, grid, knn = NULL) {
       new.coords <- matrix(.C('fastMatProd', nr = as.integer(nr.orig), ni = as.integer(nc),
                               mat1 = as.double(coords), nc = as.integer(nc),
                               mat2 = as.double(dire.mat), res = as.double(new.coords),
-                              DUP = FALSE, PACKAGE = "spMC")$res, nrow = nr.orig, ncol = nc)
+                              PACKAGE = "spMC")$res, nrow = nr.orig, ncol = nc)
       new.grid <- matrix(.C('fastMatProd', nr = as.integer(nrs), ni = as.integer(nc),
                             mat1 = as.double(grid), nc = as.integer(nc),
                             mat2 = as.double(dire.mat), res = as.double(new.grid),
-                            DUP = FALSE, PACKAGE = "spMC")$res, nrow = nrs, ncol = nc)
+                            PACKAGE = "spMC")$res, nrow = nrs, ncol = nc)
     }
     # FINDING THE k-NEAREST NEIGHBOURS #
     indices <- matrix(0L, nrow = knn, ncol = nrs)
     indices <- matrix(.C('knear', nc = as.integer(nc), nr = as.integer(nr.orig),
                          coords = as.double(new.coords), nrs = as.integer(nrs),
                          grid = as.double(new.grid), knn = as.integer(knn),
-                         indices = as.integer(indices), DUP = FALSE, PACKAGE = "spMC")$indices,
+                         indices = as.integer(indices), PACKAGE = "spMC")$indices,
                       nrow = knn, ncol = nrs)
     # SORTING SIMULATION GRID #
     path <- do.call("order", as.data.frame(t(indices)))
@@ -77,13 +77,13 @@ function(x, data, coords, grid, knn = NULL) {
                 grid = as.double(new.grid), nrs = as.integer(nrs), nc = as.integer(nc),
                 nk = as.integer(nk), ndata = as.integer(data), knn = as.integer(knn),
                 coefs = as.double(unlist(x$coefficients)), indices = as.integer(indices),
-                pProbs = as.double(prhat), DUP = FALSE, PACKAGE = "spMC")$pProbs
+                pProbs = as.double(prhat), PACKAGE = "spMC")$pProbs
   }
   prhat <- matrix(prhat, nrs, nk, byrow = TRUE)
   sim <- vector("integer", nrs)
 
   sim <- .C('tsimCate', nk = as.integer(nk), n = as.integer(nrs), prhat = as.double(prhat), 
-            initSim = as.integer(sim), DUP = FALSE, PACKAGE = "spMC")$initSim
+            initSim = as.integer(sim), PACKAGE = "spMC")$initSim
   pred <- apply(prhat, 1, which.max)
 
   rownames(grid) <- NULL
@@ -98,5 +98,6 @@ function(x, data, coords, grid, knn = NULL) {
   names(res) <- c(colnames(coords), "Simulation", "Prediction", levelLab)
   res[path, ] <- res
   attr(res, "type") <- "Multinomial Categorical Simulation"
+  class(res) <- c("data.frame", "spsim")
   return(res)
 }

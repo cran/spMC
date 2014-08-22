@@ -1,5 +1,5 @@
 tpfit_me <-
-function(data, coords, direction, tolerance = pi/8, max.it = 9000, mle = FALSE) {
+function(data, coords, direction, tolerance = pi/8, max.it = 9000, mle = "trm") {
   # Estimation for matrix of transition rates 
   #    ( Maximum Entropy Method )
   #
@@ -8,7 +8,7 @@ function(data, coords, direction, tolerance = pi/8, max.it = 9000, mle = FALSE) 
   #  direction vector (or versor) of choosen direction
   #     max.it maximum number of iterations for the optimization
   #  tolerance angle tolerance (in radians)
-  #        mle logical value to pass to the function mlen
+  #        mle argument to pass to the function tpfit
 
   if (!is.matrix(coords)) coords <- as.matrix(coords)
   n <- dim(coords)[1]
@@ -29,7 +29,7 @@ function(data, coords, direction, tolerance = pi/8, max.it = 9000, mle = FALSE) 
   fnew <- vector("numeric", nl)
   fnew <- .C('cEmbFrq', s = as.double(s), nk = as.integer(nl), mt = as.integer(max.it),
              eps = as.double(.Machine$double.eps), f = as.double(fnew),
-             DUP = FALSE, PACKAGE = "spMC")$f
+             PACKAGE = "spMC")$f
 
   Fmat <- outer(fnew, fnew)
   diag(Fmat) <- 0

@@ -2,14 +2,14 @@
 \Rdversion{1.1}
 \alias{pemt}
 
-\title{Pseudo-empirical Multidimensional Transiograms Estimation}
+\title{Multi-directional Transiograms Estimation}
 
 \description{
-The function computes the pseudo-empirical multidimensional transiograms without any ellipsoidal interpolation for \eqn{2}{2}-D sections.}
+The function computes the multi-directional transiograms without any ellipsoidal interpolation for \eqn{2}{2}-D sections.}
 
 \usage{
 pemt(data, coords, mpoints, which.dire, max.dist,
-     tolerance = pi/8, rotation = NULL, mle = FALSE)
+     tolerance = pi/8, rotation = NULL, mle = "trm")
 }
 
 \arguments{
@@ -28,7 +28,7 @@ pemt(data, coords, mpoints, which.dire, max.dist,
   \item{max.dist}{a scalar or a vector of maximum length for the chosen axial directions.}
   \item{tolerance}{a numerical value for the tolerance angle (in radians). It's \code{pi/8} by default.}
   \item{rotation}{a numerical vector of length \eqn{d - 1}{d - 1} with rotation angles (in radians), in order to perform the main axes rotation when multidimensional transiogram is estimated. No rotation is performed by default. See \code{\link{multi_tpfit_ml}}.}
-  \item{mle}{a logical value to pass to the function \code{\link{tpfit_ml}}. It is \code{FALSE} by default.}
+  \item{mle}{a character value to pass to the function \code{\link{tpfit_ml}}. It is \code{"trm"} by default.}
 }
 
 \details{
@@ -36,7 +36,7 @@ A multidimensional transiogram is a diagram which shows the transition probabili
 \deqn{\mbox{expm} (\Vert h \Vert R_h),}{expm(||h|| R),}
 where entries of \eqn{R_h}{R} are not ellipsoidally interpolated, but they are estimated for the direction specified by the vector \eqn{h}{h}.
 
-In particular cases, some entries of the estimated matrix \eqn{R_h}{R} might be not finite, so that the exponential matrix is computable and the resulting transition probabilities are set to be \code{NaN}. If \code{mle = TRUE}, this problem may be partially solved.
+In particular cases, some entries of the estimated matrix \eqn{R_h}{R} might be not finite, so that the exponential matrix is computable and the resulting transition probabilities are set to be \code{NaN}. If \code{mle = "mlk"}, this problem may be partially solved.
 
 The exponential matrix is evaluated by the scaling and squaring algorithm.
 }
@@ -56,11 +56,11 @@ Sartore, L. (2010) Geostatistical models for 3-D data. M.Phil. thesis, Ca' Fosca
 \examples{\donttest{
 data(ACM)
 
-# Compute a 2-D section of a pseudo-empirical
-# multidimensional transiogram
+# Compute a 2-D section of a
+# multi-directional transiogram
 pemt(ACM$MAT3, ACM[, 1:3], 2,
-     max.dist = c(20, 10, 5), 
-     which.dire=c(1, 3), mle = TRUE)
+     max.dist = c(200, 200, 20), 
+     which.dire=c(1, 3), mle = "mdn")
 }}
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

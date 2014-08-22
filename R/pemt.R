@@ -1,6 +1,6 @@
 pemt <-
 function(data, coords, mpoints, which.dire, max.dist, tolerance = pi/8,
-         rotation = NULL, mle = FALSE) {
+         rotation = NULL, mle = "trm") {
   # Compute transition probabilities matrices 2D
   # through no ellispoidal interpolation
   #
@@ -11,7 +11,7 @@ function(data, coords, mpoints, which.dire, max.dist, tolerance = pi/8,
   #   max.dist vector of maximum distances
   #  tolerance angle tolerance (in radians)
   #   rotation vector of rotation angles (in radians) to pass to multi_tpfit
-  #        mle logical value to pass to the function tpfit
+  #        mle argument to pass to the function tpfit
 
   if (!is.factor(data)) data <- as.factor(data)
   if (!is.matrix(coords)) coords <- as.matrix(coords)
@@ -72,7 +72,7 @@ function(data, coords, mpoints, which.dire, max.dist, tolerance = pi/8,
     same.dire <- vector("integer", nl)
     same.dire <- .C('wd', lags = as.double(lagsMat), nc = as.integer(nc),
                     nr = as.integer(nl), res = as.integer(same.dire),
-                    DUP = FALSE, PACKAGE = "spMC")$res
+                    PACKAGE = "spMC")$res
     wsd <- !duplicated(same.dire)
     coefs <- apply(lagsMat[, same.dire[wsd]], 2,
                    function(d) {
@@ -89,7 +89,7 @@ function(data, coords, mpoints, which.dire, max.dist, tolerance = pi/8,
                  lags = as.double(lagsMat), nk = as.integer(nk), nc = as.integer(nc),
                  nr = as.integer(nl), nmat = as.integer(nmat), wsd = as.integer(wsd),
                  whichd = as.integer(which.dire[2, i]), mypred = as.double(Eprobs),
-                 NAOK = TRUE, DUP = FALSE, PACKAGE = "spMC")$mypred
+                 NAOK = TRUE, PACKAGE = "spMC")$mypred
     Eprobs <- array(Eprobs, dim = c(nk, nk, nl))
 
     args$Tprobs <- Tprobs

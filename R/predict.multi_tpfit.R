@@ -30,22 +30,22 @@ function(object, lags, byrow=TRUE, ...) {
   if (!is.null(object$rotation)) {
     dire.mat <- diag(, nc)
     dire.mat <- .C('rotaxes', nc = as.integer(nc), ang = as.double(object$rotation), 
-                   res = as.double(dire.mat), DUP = FALSE, PACKAGE = "spMC")$res
+                   res = as.double(dire.mat), PACKAGE = "spMC")$res
     dire.mat <- t(matrix(dire.mat, nc, nc))
     rotlags <- .C('fastMatProd', nr = as.integer(nc), ni = as.integer(nc),
                   mat1 = as.double(dire.mat), nc = as.integer(nr), mat2 = as.double(lags),
-                  res = as.double(vector("numeric", prod(dim(lags)))), DUP = FALSE,
+                  res = as.double(vector("numeric", prod(dim(lags)))),
                   PACKAGE = "spMC")$res
     res$Tmat <- .C('predMULTI', coefficients = as.double(coefficients),
                    prop = as.double(object$prop), lags = as.double(rotlags),
                    nk = as.integer(nk), nc = as.integer(nc), nr = as.integer(nr),
-                   mypred = as.double(res$Tmat), DUP = FALSE, PACKAGE = "spMC")$mypred
+                   mypred = as.double(res$Tmat), PACKAGE = "spMC")$mypred
   }
   else {
     res$Tmat <- .C('predMULTI', coefficients = as.double(coefficients),
                    prop = as.double(object$prop), lags = as.double(lags),
                    nk = as.integer(nk), nc = as.integer(nc), nr = as.integer(nr),
-                   mypred = as.double(res$Tmat), DUP = FALSE, PACKAGE = "spMC")$mypred
+                   mypred = as.double(res$Tmat), PACKAGE = "spMC")$mypred
   }
 
   res$Tmat <- array(res$Tmat, dim = c(nk, nk, nr))

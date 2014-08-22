@@ -1,5 +1,5 @@
 transiogram <-
-function(data, coords, direction, max.dist = Inf, mpoints = 20, tolerance = pi/8) {
+function(data, coords, direction, max.dist = Inf, mpoints = 20, tolerance = pi/8, reverse = FALSE) {
   # Empirical transition probabilities estimated by points
   #
   #       data vector of data
@@ -8,7 +8,10 @@ function(data, coords, direction, max.dist = Inf, mpoints = 20, tolerance = pi/8
   #   max.dist maximum distance for counting
   #    mpoints number of lags
   #  tolerance angle tolerance (in radians)
+  #    reverse logical, if TRUE compute probabilities also for the reversible chain
 
+  if (!is.logical(reverse)) stop("\"reverse\" must be a logical value")
+  reverse <- reverse[1]
   if (!is.numeric(max.dist) || max.dist < 0) stop("\"max.dist\" must be numeric and non negative")
   if (!is.factor(data)) data <- as.factor(data)
   if (!is.matrix(coords)) coords <- as.matrix(coords)
@@ -28,7 +31,7 @@ function(data, coords, direction, max.dist = Inf, mpoints = 20, tolerance = pi/8
   direction <- direction / sqrt(sum(direction^2))
   RNG <- apply(coords, 2, range)
   dr <- sqrt(sum(diff(RNG)^2))
-  deltah <- min(dr, max.dist) / mpoints
+  deltah <- min(dr, max.dist) / (mpoints * 2^reverse)
   vDeltaH <- cumsum(rep(deltah, mpoints))
 
   # count transition occurences
@@ -37,24 +40,34 @@ function(data, coords, direction, max.dist = Inf, mpoints = 20, tolerance = pi/8
                dire = as.double(direction), tolerance = as.double(tolerance), 
                mpoints = as.integer(mpoints), bins = as.double(vDeltaH), 
                nk = as.integer(nk), trans = as.double(vector("numeric", nk^2 * mpoints)),
-               DUP = FALSE, PACKAGE = "spMC")$trans
+               PACKAGE = "spMC")$trans
   Tcount <- array(Tcount, dim = c(nk, nk, mpoints))
-  rwSum <- apply(Tcount, 3, function(x) apply(x, 1, sum))
   mtSum <- apply(Tcount, 3, sum)
   nonComputable <- mtSum == 0
   if (all(nonComputable)) stop("\"max.dist\" is lower than the minimum distance")
   # compute transition probabilities
+  rwSum <- apply(Tcount, 3, function(x) apply(x, 1, sum))
   Tcount <- .C('transProbs', mpoints = as.integer(mpoints), nk = as.integer(nk), 
                rwsum = as.double(rwSum), empTR = as.double(Tcount),
-               DUP = FALSE, PACKAGE = "spMC")$empTR
+               PACKAGE = "spMC")$empTR
   res <- list()
   res$Tmat <- array(Tcount, dim = c(nk, nk, mpoints))
-  res$Tmat <- array(c(diag(, nk), res$Tmat[, , !nonComputable]),
-                    dim = c(nk, nk, mpoints - sum(nonComputable) + 1))
+  if (reverse) {
+    revTprobs <- res$Tmat[, , !nonComputable]
+    revTprobs <- .C('revtProbs', Tmat = as.double(revTprobs),
+                    dim = as.integer(dim(revTprobs)), PACKAGE = "spMC")$Tmat
+    res$Tmat <- array(c(revTprobs, diag(, nk), res$Tmat[, , !nonComputable]),
+                      dim = c(nk, nk,  2 * (mpoints - sum(nonComputable)) + 1))
+  }
+  else {
+    res$Tmat <- array(c(diag(, nk), res$Tmat[, , !nonComputable]),
+                      dim = c(nk, nk, mpoints - sum(nonComputable) + 1))
+  }
   colnames(res$Tmat) <- rownames(res$Tmat) <- labels
 
   res$lags <- apply(cbind(c(0, vDeltaH[-mpoints]), vDeltaH), 1, mean)[!nonComputable]
   res$lags <- c(0, res$lags)
+  if (reverse) res$lags <- c(-rev(res$lags[-1]), res$lags)
   res$type <- "Empirical"
   class(res) <- "transiogram"
   return(res)

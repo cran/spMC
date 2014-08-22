@@ -30,11 +30,10 @@ function(data, coords, loc.id, direction) {
   tcount <- vector("integer", nk^2)
   tcount <- .C('cEmbedTrans', n = as.integer(n), nk = as.integer(nk), 
                locId = as.integer(loc.id), data = as.integer(data), 
-               tcount = as.integer(tcount), 
-               DUP = FALSE, PACKAGE = "spMC")$tcount
+               tcount = as.integer(tcount), PACKAGE = "spMC")$tcount
   storage.mode(tcount) <- "double"
   tcount <- .C('embedTProbs', nk = as.integer(nk), tp = as.double(tcount), 
-               DUP = FALSE, PACKAGE = "spMC")$tp
+               PACKAGE = "spMC")$tp
   tcount <- matrix(tcount, ncol = nk)
   diag(tcount) <- NA
   colnames(tcount) <- rownames(tcount) <- labels

@@ -7,7 +7,7 @@
 \description{The function estimates transition probabilities matrices for a \eqn{1}{1}-D continuous lag spatial Markov chain.}
 
 \usage{transiogram(data, coords, direction, max.dist = Inf, 
-            mpoints = 20, tolerance = pi / 8)}
+            mpoints = 20, tolerance = pi / 8, reverse = FALSE)}
 
 \arguments{
   \item{data}{a categorical data vector of length \eqn{n}{n}.}
@@ -16,6 +16,7 @@
   \item{max.dist}{a numerical value which defines the maximum lag value. It's \code{Inf} by default.}
   \item{mpoints}{a numerical value which defines the number of lag intervals.}
   \item{tolerance}{a numerical value for the tolerance angle (in radians). It's \code{pi/8} by default.}
+  \item{reverse}{a logical value. If \code{TRUE} the transition probabilities of the reversible chain are also computed. It's \code{FALSE} by default.}
 }
 
 \details{

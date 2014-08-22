@@ -4,7 +4,7 @@ function(x, ...) {
   dire.mat <- diag(, nc)
   if (!is.null(x$rotation)) {
     dire.mat <- .C('rotaxes', nc = as.integer(nc), ang = as.double(x$rotation),
-                   res = as.double(dire.mat), DUP = FALSE, PACKAGE = "spMC")$res
+                   res = as.double(dire.mat), PACKAGE = "spMC")$res
     dire.mat <- t(matrix(dire.mat, nc, nc))
   } 
   for(i in 1:nc) {

@@ -30,7 +30,7 @@ function(data, coords, loc.id, direction, zero.allowed = FALSE) {
              coords = as.double(coords), locId = as.integer(loc.id),
              data = as.integer(data), cemoc = as.integer(vector("integer", n)),
              maxcens = as.double(vector("numeric", n)), tlen = as.double(vector("numeric", n)),
-             DUP = FALSE, PACKAGE = "spMC")[c(1, 6:8)]
+             PACKAGE = "spMC")[c(1, 6:8)]
   mycenslen <- lens$maxcens[1:lens$n]
   lens$maxcens <- NULL
   lens$categories <- as.factor(levels(data)[lens$cemoc[1:lens$n]])

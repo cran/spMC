@@ -1,3 +1,16 @@
+bibentry("Article",
+         title   = "spMC: Modelling Spatial Random Fields with Continuous Lag Markov Chains",
+         author  = "Luca Sartore",
+         journal = "The R Journal",
+         year    = "2013",
+         volume  = "5",
+         number  = "2",
+         pages   = "16--29",
+         month   = "Dec",
+         url     = "http://journal.r-project.org/archive/2013-2/sartore.pdf",
+         textVersion = "Luca Sartore. spMC: Modelling Spatial Random Fields with Continuous Lag Markov Chains. The R Journal, 5(2):16-29, Dec 2013.",
+         header = gettextf("To cite the %s package in publications use:", sQuote("spMC")))
+
 bibentry("Manual",
          title  = "spMC: Continuous Lag Spatial Markov Chains",
          author = packageDescription("spMC", fields = "Author"),
@@ -9,5 +22,4 @@ bibentry("Manual",
                "spMC: Continuous Lag Spatial Markov Chains. ",
                "R package version ", packageDescription("spMC", fields = "Version"), 
                ".", sep=""),
-
-         header = gettextf("To cite package %s in publications use:", sQuote("spMC")))
+         header = "Or for its manual:")

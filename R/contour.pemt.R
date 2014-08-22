@@ -17,7 +17,7 @@ function(x, nlevels = 10, col = c("black", "blue"), main, mar, ask = TRUE, ...) 
   mpoints <- x[[ix]]$mpoints
   coordsnames <- x[[ix]]$coordsnames
 
-  if (missing(main) || !is.character(main)) main <- "Pseudoempirical transiogram"
+  if (missing(main) || !is.character(main)) main <- "Multidirectional transiogram"
   which.dire <- x[[ix]]$which.dire
   nimg <- dim(which.dire)
 
@@ -88,7 +88,7 @@ function(x, nlevels = 10, col = c("black", "blue"), main, mar, ask = TRUE, ...) 
 
     par(mar = c(2.2, 0.1, 1.2, 0.1))
     plot.new()
-    legend("center", bty = "n", legend = c("Pseudoempirical transiogram", 
+    legend("center", bty = "n", legend = c("Multidirectional transiogram", 
            "Theroretical transiogram"), col = col, horiz = TRUE, lwd = 1, cex = 1.5)
   }
 

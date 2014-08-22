@@ -33,16 +33,16 @@ function(x, data, coords, grid, radius, fixed=FALSE) {
   new.grid <- grid
   if (!is.null(x$rotation)) {
     dire.mat <- .C('rotaxes', nc = as.integer(nc), ang = as.double(x$rotation), 
-                   res = as.double(dire.mat), DUP = FALSE, PACKAGE = "spMC")$res
+                   res = as.double(dire.mat), PACKAGE = "spMC")$res
     dire.mat <- matrix(dire.mat, nc, nc)
     new.coords <- matrix(.C('fastMatProd', nr = as.integer(nr.orig), ni = as.integer(nc),
                           mat1 = as.double(coords), nc = as.integer(nc),
                           mat2 = as.double(dire.mat), res = as.double(new.coords),
-                          DUP = FALSE, PACKAGE = "spMC")$res, nrow = nr.orig, ncol = nc)
+                          PACKAGE = "spMC")$res, nrow = nr.orig, ncol = nc)
     new.grid <- matrix(.C('fastMatProd', nr = as.integer(nrs), ni = as.integer(nc),
                           mat1 = as.double(grid), nc = as.integer(nc),
                           mat2 = as.double(dire.mat), res = as.double(new.grid),
-                          DUP = FALSE, PACKAGE = "spMC")$res, nrow = nrs, ncol = nc)
+                          PACKAGE = "spMC")$res, nrow = nrs, ncol = nc)
   }
 
   # GENERATING THE PATH TO FOLLOW
@@ -67,13 +67,13 @@ function(x, data, coords, grid, radius, fixed=FALSE) {
             path = as.integer(path), radius = as.double(radius), nk = as.integer(nk),
             data = as.integer(data), coefs = as.double(unlist(x$coefficients)),
             prop = as.double(x$prop), prhat = as.double(prhat), pred = as.integer(pred),
-            DUP = FALSE, PACKAGE = "spMC")[12:13]
+            PACKAGE = "spMC")[12:13]
 
   prhat <- matrix(res$prhat, nrow = nrs, ncol = nk)
 
   simu <- vector("integer", nrs)
   simu <- .C('tsimCate', nk = as.integer(nk), n = as.integer(nrs), prhat = as.double(prhat), 
-            initSim = as.integer(simu), DUP = FALSE, PACKAGE = "spMC")$initSim
+            initSim = as.integer(simu), PACKAGE = "spMC")$initSim
 
   tmpfct <- 1:nk
   tmpfct <- factor(tmpfct, labels = levelLab)
@@ -87,5 +87,6 @@ function(x, data, coords, grid, radius, fixed=FALSE) {
   names(res) <- c(colnames(coords), "Simulation", "Prediction", levelLab)
   tipo <- if (fixed) {"Fixed"} else {"Random"}
   attr(res, "type") <- paste(tipo, "Path Simulation")
+  class(res) <- c("data.frame", "spsim")
   return(res)
 }

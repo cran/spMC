@@ -145,6 +145,11 @@ image(x, 3, max.dist=c(20,10,5), which.dire=2:3,
       mar = .7, col=rev(heat.colors(500)),
       breaks=0:500/500, nlevels = 5)
 
+# 3D-Plot for a 2-D theoretical sections of
+# a multidimensional transiogram
+persp(x, 3, max.dist=c(20,10,5), which.dire=2:3,
+      mar = .7, col=rev(heat.colors(500)))
+
 ### Name: image.pemt (is.pemt)
 ### Title: Images with Pseudo-empirical Multidimensional Transiograms
 ### Aliases: imgMultiTransiogram
@@ -167,6 +172,11 @@ contour(psEmpTr, mar = .7)
 # a multidimensional transiogram
 image(psEmpTr, col = rev(heat.colors(500)), 
       breaks = 0:500 / 500, mar = .7)
+
+# 3D-Plot for a 2-D pseudo-empirical sections of
+# a multidimensional transiogram
+persp(psEmpTr, col = rainbow(500), mar = .7,
+      theta = 15, phi = 45)
 
 # Test the object psEmpTr
 is.pemt(psEmpTr)
@@ -236,7 +246,7 @@ is.tpfit(MoPa)
 TTPr <- predict(MoPa, lags = 0:2/2)
 
 # Compute empirical transition probabilities 
-ETPr <- transiogram(ACM$MAT5, ACM[, 1:3], c(0, 0, 1), 200, 20)
+ETPr <- transiogram(ACM$MAT5, ACM[, 1:3], c(0, 0, 1), 200, 20, reverse = TRUE)
 
 # Test the objects TTPr and ETPr
 is.transiogram(TTPr)
@@ -289,7 +299,7 @@ mixplot(list(ETr, TPr), type = c("p", "l"), pch = "+", col = c(3, 1))
 
 # Estimate the parameters of a 
 # multidimensional MC model
-multi_tpfit_ils(ACM$MAT3, ACM[, 1:3], 100)
+multi_tpfit_ils(ACM$MAT3, ACM[, 1:3], 200)
 
 ### Name: multi_tpfit_me
 ### Title: Maximum Entropy Method for Multidimensional Model Parameters
@@ -301,7 +311,7 @@ multi_tpfit_ils(ACM$MAT3, ACM[, 1:3], 100)
 
 # Estimate transition rates matrices and
 # proportions for the categorical variable MAT3
-multi_tpfit_me(ACM$MAT3, ACM[, 1:3])
+multi_tpfit_me(ACM$MAT3, ACM[, 1:3], mle = "mdn")
 
 ### Name: multi_tpfit
 ### Tested during the sim_ck() example
@@ -451,6 +461,11 @@ print(MoPa)
 # Print results
 print(TTPr)
 print(ETPr)
+
+rownames(ETPr$Tmat) <- c("Clay", "Gravel", "Sand and Clay", "Sand and Gravel", "Sand")
+colnames(ETPr$Tmat) <- rownames(ETPr$Tmat)
+plot(ETPr, type = "l")
+
 
 ### Name: summary.lengths
 ### Tested during the print.summary.lengths() example

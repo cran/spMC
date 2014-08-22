@@ -16,7 +16,7 @@ function(coords, direction, tolerance = pi/8) {
   id <- .C('wl', n = as.integer(n), nc = as.integer(nc), 
             coords = as.double(coords), dire = as.double(direction),
             tolerance = as.double(tolerance), 
-            id = as.integer(vector("integer", n)), DUP = FALSE, PACKAGE = "spMC")$id
+            id = as.integer(vector("integer", n)), PACKAGE = "spMC")$id
   return(as.integer(as.factor(id)))
 }
 

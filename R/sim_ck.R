@@ -38,16 +38,16 @@ function(x, data, coords, grid, knn = 12, ordinary = TRUE, GA = FALSE, optype = 
   new.grid <- grid
   if (!is.null(x$rotation)) {
     dire.mat <- .C('rotaxes', nc = as.integer(nc), ang = as.double(x$rotation), 
-                   res = as.double(dire.mat), DUP = FALSE, PACKAGE = "spMC")$res
+                   res = as.double(dire.mat), PACKAGE = "spMC")$res
     dire.mat <- matrix(dire.mat, nc, nc)
     new.coords <- matrix(.C('fastMatProd', nr = as.integer(nr), ni = as.integer(nc),
                           mat1 = as.double(coords), nc = as.integer(nc),
                           mat2 = as.double(dire.mat), res = as.double(new.coords),
-                          DUP = FALSE, PACKAGE = "spMC")$res, nrow = nr, ncol = nc)
+                          PACKAGE = "spMC")$res, nrow = nr, ncol = nc)
     new.grid <- matrix(.C('fastMatProd', nr = as.integer(nrs), ni = as.integer(nc),
                           mat1 = as.double(grid), nc = as.integer(nc),
                           mat2 = as.double(dire.mat), res = as.double(new.grid),
-                          DUP = FALSE, PACKAGE = "spMC")$res, nrow = nrs, ncol = nc)
+                          PACKAGE = "spMC")$res, nrow = nrs, ncol = nc)
   }
 
   # FINDING THE k-NEAREST NEIGHBOURS #
@@ -55,7 +55,7 @@ function(x, data, coords, grid, knn = 12, ordinary = TRUE, GA = FALSE, optype = 
   indices <- matrix(.C('knear', nc = as.integer(nc), nr = as.integer(nr),
                        coords = as.double(new.coords), nrs = as.integer(nrs),
                        grid = as.double(new.grid), knn = as.integer(knn),
-                       indices = as.integer(indices), DUP = FALSE, PACKAGE = "spMC")$indices,
+                       indices = as.integer(indices), PACKAGE = "spMC")$indices,
                     nrow = knn, ncol = nrs)
 
   # SORTING SIMULATION GRID #
@@ -75,13 +75,13 @@ function(x, data, coords, grid, knn = 12, ordinary = TRUE, GA = FALSE, optype = 
                      coords = as.double(new.coords), grid = as.double(new.grid),
                      nk = as.integer(nk), coef = as.double(unlist(x$coefficients)),
                      prop = as.double(x$prop), probs = as.double(probs),
-                     DUP = FALSE, PACKAGE = "spMC")$probs,
+                     PACKAGE = "spMC")$probs,
                   nrow = nrs, ncol = nk)           
   # PREDICTION AND SIMULATION PROCEDURE #
   pred <- apply(probs, 1, which.max)
   initSim <- vector("integer", nrs)
   initSim <- .C('tsimCate', nk = as.integer(nk), n = as.integer(nrs), prhat = as.double(probs),
-     initSim = as.integer(initSim), DUP = FALSE, PACKAGE = "spMC")$initSim
+     initSim = as.integer(initSim), PACKAGE = "spMC")$initSim
 
   # OPTIMIZATION PROCEDURE #
   toOptim <- function(x, mySim, grid) {
@@ -105,7 +105,7 @@ function(x, data, coords, grid, knn = 12, ordinary = TRUE, GA = FALSE, optype = 
       res <- .C('objfun', nrs = as.integer(nrs), nk = as.integer(nk), nc = as.integer(nc),
          mySim = as.integer(mySim), grid = as.double(grid),
          coef = as.double(unlist(x$coefficients)), prop = as.double(x$prop),
-         res = as.double(res), DUP = FALSE, PACKAGE = "spMC")$res
+         res = as.double(res), PACKAGE = "spMC")$res
       return(res)
     }
   }
@@ -117,7 +117,7 @@ function(x, data, coords, grid, knn = 12, ordinary = TRUE, GA = FALSE, optype = 
     indicesim <- matrix(.C('knear', nc = as.integer(nc), nr = as.integer(nrs),
                          coords = as.double(new.grid), nrs = as.integer(nrs),
                          grid = as.double(new.grid), knn = as.integer(sknn),
-                         indices = as.integer(indicesim), DUP = FALSE,
+                         indices = as.integer(indicesim),
                          PACKAGE = "spMC")$indices,
                       nrow = sknn, ncol = nrs)
     sknn <- sknn - 1L
@@ -128,7 +128,7 @@ function(x, data, coords, grid, knn = 12, ordinary = TRUE, GA = FALSE, optype = 
          nc = as.integer(nc), nr = as.integer(nrs), mySim = as.integer(mySim),
          grid = as.double(grid), coef = as.double(unlist(x$coefficients)),
          prop = as.double(x$prop), data = as.integer(mySim), coords = as.double(grid),
-         res = as.double(res), DUP = FALSE, PACKAGE = "spMC")$res
+         res = as.double(res), PACKAGE = "spMC")$res
       return(res)
     }
   }
@@ -140,7 +140,7 @@ function(x, data, coords, grid, knn = 12, ordinary = TRUE, GA = FALSE, optype = 
          mySim = as.integer(mySim), grid = as.double(grid),
          coef = as.double(unlist(x$coefficients)), prop = as.double(x$prop),
          data = as.integer(data), coords = as.double(coords), res = as.double(res),
-         DUP = FALSE, PACKAGE = "spMC")$res
+         PACKAGE = "spMC")$res
       return(res)
     }
   }
@@ -167,5 +167,6 @@ function(x, data, coords, grid, knn = 12, ordinary = TRUE, GA = FALSE, optype = 
   res[path, ] <- res
   attr(res, "type") <- paste(ifelse(ordinary, "Ordinary", "Simple"), 
                              "Indicator coKriging Simulation")
+  class(res) <- c("data.frame", "spsim")
   return(res)
 }

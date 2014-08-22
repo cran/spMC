@@ -2,10 +2,10 @@
 \Rdversion{1.1}
 \alias{is.pemt}
 
-\title{Images with Pseudo-empirical Multidimensional Transiograms}
+\title{Images with Multi-direct`ional Transiograms}
 
 \description{
-The function plots \eqn{2}{2}-D sections of a pseudo-empirical multidimensional transiogram computed without any ellipsoidal interpolation.}
+The function plots \eqn{2}{2}-D sections of a multi-directional transiogram computed without any ellipsoidal interpolation.}
 
 \usage{is.pemt(object)}
 
@@ -24,8 +24,8 @@ The function plots \eqn{2}{2}-D sections of a pseudo-empirical multidimensional 
 \examples{\donttest{
 data(ACM)
 
-# Compute a 2-D section of a pseudo-empirical
-# multidimensional transiogram
+# Compute a 2-D section of a
+# multi-directional transiogram
 psEmpTr <- pemt(ACM$MAT3, ACM[, 1:3], 2,
                 max.dist = c(20, 10, 5), 
                 which.dire=c(1, 3), 

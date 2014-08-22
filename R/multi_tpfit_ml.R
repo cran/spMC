@@ -1,12 +1,12 @@
 multi_tpfit_ml <-
-function(data, coords, tolerance = pi/8, rotation = NULL, mle = FALSE) {
+function(data, coords, tolerance = pi/8, rotation = NULL, mle = "trm") {
   # Estimation for matrixes of transition rates
   #
   #       data vector of data
   #     coords coordinates matrix
   #  tolerance angle for tolerance (in radians)
   #   rotation vector of rotation angles (in radians)
-  #        mle logical value to pass to the function tpfit
+  #        mle argument to pass to the function tpfit
 
   if (!is.factor(data)) data <- as.factor(data)
   if (!is.matrix(coords)) coords <- as.matrix(coords)
@@ -19,7 +19,7 @@ function(data, coords, tolerance = pi/8, rotation = NULL, mle = FALSE) {
     if (length(rotation) != nc - 1) stop("wrong length of rotation vector; the right length is ", nc - 1)
     storage.mode(rotation) <- "double"
     dire.mat <- .C('rotaxes', nc = as.integer(nc), ang = as.double(rotation),
-                   res = as.double(dire.mat), DUP = FALSE, PACKAGE = "spMC")$res
+                   res = as.double(dire.mat), PACKAGE = "spMC")$res
     dire.mat <- t(matrix(dire.mat, nc, nc))
   }
 

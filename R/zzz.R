@@ -1,5 +1,5 @@
 .onLoad <- function(lib, pkg) {
-       .C('setNumSlaves', n = as.integer(1L), DUP = FALSE, PACKAGE = "spMC")
+       .C('setNumSlaves', n = as.integer(1L), PACKAGE = "spMC")
 }
 
 .onAttach <- function(lib, pkg) {

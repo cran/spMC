@@ -7,20 +7,20 @@
 \description{The function estimates the model parameters of a \eqn{d}{d}-D continuous lag spatial Markov chain. Transition rates matrices along axial directions and proportions of categories are computed.}
 
 \usage{multi_tpfit_me(data, coords, tolerance = pi/8, max.it = 9000,
-              rotation = NULL, mle = FALSE)}
+               rotation = NULL, mle = "trm")}
 
 \arguments{
 %%         data vector of data
 %%       coords coordinates matrix
 %%    tolerance angle tolerance (in radians)
 %%     rotation vector of rotation angles (in radians)
-%%       mle logical value to pass to the function tpfit
+%%       mle argument to pass to the function tpfit
   \item{data}{a categorical data vector of length \eqn{n}{n}.}
   \item{coords}{an \eqn{n \times d}{n x d} matrix where each row denotes the \eqn{d}{d}-D coordinates of data locations.}
   \item{tolerance}{a numerical value for the tolerance angle (in radians). It is \code{pi/8} by default.}
   \item{max.it}{a numerical value which denotes the maximum number of iterations to perform during the optimization phase. It is \code{9000} by default.}
   \item{rotation}{a numerical vector of length \eqn{d - 1}{d - 1} with rotation angles (in radians), in order to perform the main axes rotation. No rotation is performed by default.}
-  \item{mle}{a logical value to pass to the function \code{\link{tpfit}}. It is \code{FALSE} by default.}
+  \item{mle}{a character value to pass to the function \code{\link{tpfit}}. It is \code{"trm"} by default.}
 }
 
 \details{
@@ -36,7 +36,7 @@ If \eqn{h_i < 0}{h_i < 0} the respective entries \eqn{r_{jk, \mathbf{e}_i}}{r_(j
 \deqn{r_{jk, -\mathbf{e}_i} = \frac{p_k}{p_j} \, r_{kj, \mathbf{e}_i},}{r_(jk, -e_i) = p_k / p_j * r_(kj, e_i),}
 where \eqn{p_k}{p_k} and \eqn{p_j}{p_j} respectively denote the proportions for the \eqn{k}{k}-th and \eqn{j}{j}-th categories. In so doing, the model may describe the anisotropy of the process.
 
-When some entries of the rates matrices are not identifiable, it is suggested to vary the \code{tolerance} coefficient and the \code{rotation} angles. This problem may be also avoided if the input argument \code{mle} is to set to be \code{TRUE}.
+When some entries of the rates matrices are not identifiable, it is suggested to vary the \code{tolerance} coefficient and the \code{rotation} angles. This problem may be also avoided if the input argument \code{mle} is to set to be \code{"mlk"}.
 }
 
 \value{

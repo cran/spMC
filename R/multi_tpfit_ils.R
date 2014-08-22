@@ -25,7 +25,7 @@ function(data, coords, max.dist = Inf, mpoints = 20, tolerance = pi/8, rotation 
     if (length(rotation) != nc - 1) stop("wrong length of rotation vector; the right length is ", nc - 1)
     storage.mode(rotation) <- "double"
     dire.mat <- .C('rotaxes', nc = as.integer(nc), ang = as.double(rotation),
-                   res = as.double(dire.mat), DUP = FALSE, PACKAGE = "spMC")$res
+                   res = as.double(dire.mat), PACKAGE = "spMC")$res
     dire.mat <- t(matrix(dire.mat, nc, nc))
   }
   if(length(max.dist) < nc) max.dist <- rep(max.dist[1], nc)

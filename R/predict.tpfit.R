@@ -11,7 +11,7 @@ function(object, lags, ...) {
   mypred <- .C('predTPFIT', coefficients = as.double(object$coefficients), 
                prop = as.double(object$prop), lags = as.double(lags), 
                mydim = as.integer(mydim), mypred = as.double(mypred), 
-               DUP = FALSE, PACKAGE = "spMC")$mypred
+               PACKAGE = "spMC")$mypred
 
   res <- list()
   res$Tmat <- array(unlist(mypred), dim = mydim)

@@ -2,10 +2,10 @@
 \Rdversion{1.1}
 \alias{image.pemt}
 
-\title{Images with Pseudo-empirical Multidimensional Transiograms}
+\title{Images with Multi-directional Transiograms}
 
 \description{
-The function plots \eqn{2}{2}-D sections of a pseudo-empirical multidimensional transiogram computed without any ellipsoidal interpolation.}
+The function plots \eqn{2}{2}-D sections of a multidirectional transiogram computed without any ellipsoidal interpolation.}
 
 \usage{
 \method{image}{pemt}(x, main, mar, ask = TRUE, ..., 
@@ -52,15 +52,15 @@ Sartore, L. (2010) Geostatistical models for 3-D data. M.Phil. thesis, Ca' Fosca
 \examples{\donttest{
 data(ACM)
 
-# Compute a 2-D section of a pseudo-empirical
-# multidimensional transiogram
+# Compute a 2-D section of a
+# multi-directional transiogram
 psEmpTr <- pemt(ACM$MAT3, ACM[, 1:3], 2,
-                max.dist = c(20, 10, 5), 
+                max.dist = c(200, 200, 20), 
                 which.dire=c(1, 3), 
-                mle = TRUE)
+                mle = "mlk")
 
-# Plot 2-D pseudo-empirical sections of
-# a multidimensional transiogram
+# Plot 2-D sections of
+# a multi-directional transiogram
 image(psEmpTr, col = rev(heat.colors(500)), 
       breaks = 0:500 / 500, mar = .7)
 }}

@@ -1,33 +1,34 @@
-image.pemt <-
-function(x, main, mar, ask = TRUE, ..., nlevels = 10, contour = FALSE) {
-  # Plot transition probabilities matrices 2D
+persp.pemt <-
+function(x, main, mar, ask = TRUE, col = "white", ...) {
+
+  # 3D-Plot transition probabilities matrices 2D
   # through no ellispoidal interpolation
   #
   #          x object return by the function pemt()
   #       main title string
   #        mar vector to pass to par()  
   #        ask boolean to pass to par()
+  #        col vector of colors ordered from 1 to 0
   #        ... other args to pass to image()
-  #    nlevels number of levels to pass to contour()
-  #    contour boolean values that permits to draw contour lines
 
   ix <- length(x)
   nk <- x[[ix]]$nk
   mpoints <- x[[ix]]$mpoints
   coordsnames <- x[[ix]]$coordsnames
+  nomi <- x[[ix]]$nomi
 
-  if (missing(main) || !is.character(main)) main <- "Pseudoempirical transiogram"
+  if (missing(main) || !is.character(main)) main <- "Multidirectional transiogram"
   which.dire <- x[[ix]]$which.dire
   nimg <- dim(which.dire)
 
-  ly <- matrix(c(rep(1, nk), rep(0, nk), 2:(nk^2+1), rep(0, nk), rep(nk^2+2, nk)), ncol = nk, byrow = TRUE)
+  ly <- matrix(c(rep(1, nk), nk^2+(1:nk)+2, 2:(nk^2+1), rep(0, nk), rep(nk^2+2, nk)), ncol = nk, byrow = TRUE)
   yl <- c(rep(0, nk + 4))
-  ly <- cbind(yl, yl, ly, yl, yl)
+  yl1 <- c(rep(0, 2), (nk+1)*nk+2+(1:nk), rep(0, 2))
+  ly <- cbind(yl, yl1, ly, yl, yl)
   widths <- c(rep(4 - 0.5 * nk, 2), rep(30/nk, nk), rep(4 - 0.5 * nk, 2)) / 4
   heights <- c(0.75, 1/3.5, rep(7.5/nk, nk), 2/3.5, 1)
   ly <- layout(ly, widths = widths, heights = heights, respect = TRUE)
   
-  nomi <- x[[ix]]$nomi
   if (missing(mar) || !is.numeric(mar)) {
     mar <- sum(c(0, 1, 0, -0.5, -0.2, rep(0, 4), 0.2, rep(c(-0.1, rep(0, 3)), 2), 0)[1:nk])
     mar <- rep(mar, 4)
@@ -58,34 +59,41 @@ function(x, main, mar, ask = TRUE, ..., nlevels = 10, contour = FALSE) {
     par(mar = mar)
     for (j in 1:nk) {
       for (k in 1:nk) {
-        image(x[[i]]$X, x[[i]]$Y,
-              t(matrix(rev(x[[i]]$Eprobs[j, k, ]), mpoints, mpoints)),
-              xlab = paste("Coord", which.dire[1, i]),
-              ylab = paste("Coord", which.dire[2, i]), ..., 
-              zlim = 0:1, axes = FALSE)
-        box()
-        if (k == 1) axis(2)
-        if (k == nk) axis(4, 0, labels = nomi[j], tick = FALSE, font = 3)
-        if (j == nk) axis(1)
-        if (j == 1) axis(3, 0, labels = nomi[k], tick = FALSE, font = 3)
-        if (is.null(x[[i]]$Tprobs)) {
-          message("Contour values missing or not computable")
+        zzz <- t(matrix(rev(x[[i]]$Eprobs[j, k, ]), mpoints, mpoints))
+        colid <- 1
+        if (length(col) > 1) {
+          colth <- seq(1 / length(col), 1, length.out = length(col))
+          colid <- sapply(zzz, function(xx) sum(xx < colth))
+          dim(colid) <- dim(zzz)
+          colid <- colid[-1, -1]
+          zlim <- range(zzz, na.rm = TRUE)
         }
         else {
-          if (contour) {
-            contour(x[[i]]$X, x[[i]]$Y,
-                    t(matrix(rev(x[[i]]$Tprobs$Tmat[j, k, ]), mpoints, mpoints)),
-                    nlevels, add = TRUE)
-          }
+          zlim <- 0:1
         }
+        persp(x[[i]]$X, x[[i]]$Y, zzz, 
+              col = rev(col)[colid], zlab = "", zlim = zlim,
+              xlab = coordsnames[which.dire[1, i]], 
+              ylab = coordsnames[which.dire[2, i]], ...) #sub = paste(nomi[j], "to", nomi[k])
       }
     }
 
     par(mar = c(2.2, 0.1, 1.2, 0.1))
-    image(matrix(0:500/500, ncol=1), ..., main="Legend", axes = FALSE)
-    box()
-    axis(1)
-
+    if (length(col) > 1) {
+      image(matrix(colth, ncol = 1), col = col, main="Legend", axes = FALSE)
+      box()
+      axis(1)
+    }
+    else {
+      plot.new()
+    }
+    par(mar = c(0.1, 0.1, 0.1, 0.1))
+    for (j in c(0, 90)) {
+      for (lbls in nomi) {
+        plot.new()
+        text(0.5, 0.5, labels = lbls, srt = j, font = 3)
+      }
+    }
   }
 
 }

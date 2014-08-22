@@ -6,23 +6,26 @@
 
 \description{The function estimates the mean length for a \eqn{d}{d}-D spatial embedded Markov chain for a specified direction \eqn{\phi}{phi}.}
 
-\usage{mlen(data, coords, loc.id, direction, mle = FALSE)}
+\usage{mlen(data, coords, loc.id, direction, mle = "trm")}
 
 \arguments{
 %%        data vector of data
 %%      coords matrix of coordinates
 %%      loc.id location Id (which_lines output)
 %%   direction vector (or versor) of chosen direction
-%%         mle logical value, if TRUE the MLEs will be returned (log-normal distro assumed)
+%%         mle string of characters, 
+%%             if "mle" the MLEs will be returned (log-normal distro assumed)
+%%             it can be logical for backward compatibility reasons
+
   \item{data}{a categorical data vector of length \eqn{n}{n}.}
   \item{coords}{an \eqn{n \times d}{n x d} matrix where each row denotes the \eqn{d}{d}-D coordinates of data locations.}
   \item{loc.id}{a vector of \eqn{n}{n} values which indicates the directional line of each location. It is usually the output of the function \code{\link{which_lines}}.}
   \item{direction}{a \eqn{d}{d}-D numerical vector (or versor) which represents the chosen direction.}
-  \item{mle}{a logical value. If \code{TRUE}, the maximum likelihood mean lengths will be computed, otherwise the arithmetic mean is performed. It is \code{FALSE} by default.}
+  \item{mle}{a character value. If \code{"trm"}, the trimmed arithmetic average will be used to calculate the mean lengths. If \code{"mdn"}, the trimmed median will be considered. If \code{"mlk"}, the maximum likelihood mean lengths will be computed. If \code{"avg"}, the arithmetic mean will be performed. For backward compatibility reasons, it can accept logical values, so that \code{TRUE} is equivalent to \code{"mlk"} and \code{FALSE} to \code{"avg"}.}
 }
 
 \details{
-The mean length is the total length occupied by the \eqn{k}{k}-th category divided by the number of its embedded occurrences along lines in the direction \eqn{\phi}{phi}.
+The mean length is the total length occupied by the \eqn{k}{k}-th category divided by the number of its embedded occurrences along lines in the direction \eqn{\phi}{phi}. More robust methods are implemented, such as the trimmed mean and the trimmed median.
 
 If the stratum lengths are censored, the maximum likelihood approach is more appropriate than the arithmetic mean. In this case, the stratum lengths are assumed to be independent realizations from a log-normal random variable. The quantity to maximize is
 \deqn{L(\mu_1, \ldots, \mu_K, \sigma_1, \ldots, \sigma_K) = \prod_{i = 1}^m \prod_{k = 1}^K \left[ \int_{l_i}^{l_i+u_i} \frac{1}{x \sigma_k \sqrt{2}} \exp \left\lbrace - \frac{(\log x - \mu_k)^2}{2 \sigma_k^2} \right\rbrace \right]^{z_{k, i}} \mbox{d}x,}{L(mu, sigma) = prod_(i=1)^m prod_(k=1)^K Pr(l_i < X < l_i + u_i)^(z_k),}
@@ -47,7 +50,7 @@ direction <- c(0,0,1)
 loc.id <- which_lines(ACM[, 1:3], direction)
 
 # Estimate the mean lengths for each observed category
-ml <- mlen(ACM$MAT5, ACM[, 1:3], loc.id, direction)
+ml <- mlen(ACM$MAT5, ACM[, 1:3], loc.id, direction, mle = "avg")
 
 # Equivalently
 gl <- getlen(ACM$MAT5, ACM[, 1:3], loc.id, direction, zero.allowed = TRUE)

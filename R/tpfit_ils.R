@@ -51,10 +51,10 @@ function(data, coords, direction, max.dist = Inf, mpoints = 20, tolerance = pi/8
     mypred <- .C('predTPFIT', coefficients = as.double(xx),
                prop = as.double(propt), lags = as.double(trans$lags), 
                mydim = as.integer(mydim), mypred = as.double(mypred), 
-               DUP = FALSE, PACKAGE = "spMC")$mypred
+               PACKAGE = "spMC")$mypred
     sse <- .C('fastrss', n = as.integer(nl * nl * ll), mypred = as.double(mypred),
               Tmat = as.double(trans$Tmat), rss = as.double(0), NAOK = TRUE,
-              DUP = FALSE, PACKAGE = "spMC")$rss
+              PACKAGE = "spMC")$rss
     sse <- sse + rho * sum(xx[nl, -nl]^2 * (xx[nl, -nl] < 0), na.rm = TRUE)
     return(sse)
   }

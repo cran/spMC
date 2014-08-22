@@ -1,5 +1,5 @@
 tpfit <-
-function(data, coords, direction, method = "ml", tolerance = pi/8, max.it = 9000, mle = FALSE, ...) {
+function(data, coords, direction, method = "ml", tolerance = pi/8, max.it = 9000, mle = "trm", ...) {
   # Estimation for matrix of transition rates
   #
   #       data vector of data
@@ -8,7 +8,7 @@ function(data, coords, direction, method = "ml", tolerance = pi/8, max.it = 9000
   #     method estimation method c("ml", "ils", "me")
   #  tolerance angle tolerance (in radians)
   #     max.it maximum number of iterations for the optimization (used only for the 'me' method)
-  #        mle logical value to pass to the function mlen (not used for the 'ils' method)
+  #        mle argument to pass to the function mlen (not used for the 'ils' method)
   #        ... further arguments to pass to tpfit_ils function, such as:
   #    #     * max.dist maximum distance for counting
   #    #     *  mpoints number of lags

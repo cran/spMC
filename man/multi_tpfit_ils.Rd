@@ -9,8 +9,8 @@ The function estimates the model parameters of a \eqn{d}{d}-D continuous lag spa
 }
 
 \usage{multi_tpfit_ils(data, coords, max.dist = Inf, mpoints = 20,
-               tolerance = pi/8, rotation = NULL, q = 10,
-               echo = FALSE, ..., mtpfit)}
+                tolerance = pi/8, rotation = NULL, q = 10,
+                echo = FALSE, ..., mtpfit)}
 
 \arguments{
 %%         data vector of data

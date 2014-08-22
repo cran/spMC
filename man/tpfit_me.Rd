@@ -9,7 +9,7 @@ The function estimates the model parameters of a 1-D continuous lag spatial Mark
 }
 
 \usage{tpfit_me(data, coords, direction, tolerance = pi/8,
-         max.it = 9000, mle = FALSE)}
+         max.it = 9000, mle = "trm")}
 
 \arguments{
 %%         data vector of data
@@ -22,7 +22,7 @@ The function estimates the model parameters of a 1-D continuous lag spatial Mark
   \item{direction}{a \eqn{d}{d}-D numerical vector (or versor) which represents the chosen direction.}
   \item{tolerance}{a numerical value for the tolerance angle (in radians). It is \code{pi/8} by default.}
   \item{max.it}{a numerical value which denotes the maximum number of iterations to perform during the optimization phase. It is \code{9000} by default.}
-  \item{mle}{a logical value to pass to the function \code{\link{mlen}}. It is \code{FALSE} by default.}
+  \item{mle}{a character value to pass to the function \code{\link{mlen}}. It is \code{"trm"} by default.}
 }
 
 \details{
@@ -34,7 +34,7 @@ To calculate entries of the transition rate matrix, we need to maximize the entr
 \deqn{e = - \sum_{k}^K \sum_{j \neq k}^K \tau_{jk, \phi} \log \tau_{jk, \phi},}{e = E[log tau_(jk, phi)],}
 where \eqn{\tau_{jk, \phi}}{tau_(jk, phi)} are transition probabilities of embedded occurrences. It is maximized by the use of the iterative proportion fitting method.
 
-When some entries of the matrix \eqn{R}{R} are not identifiable, it is suggested to vary the \code{tolerance} coefficient or to set to \code{TRUE} the input argument \code{mle}.}
+When some entries of the matrix \eqn{R}{R} are not identifiable, it is suggested to vary the \code{tolerance} coefficient or to set the input argument \code{mle} to \code{"mlk"}.}
 
 \value{
 An object of the class \code{tpfit} is returned. The function \code{\link{print.tpfit}} is used to print the fitted model. The object is a list with the following components: 

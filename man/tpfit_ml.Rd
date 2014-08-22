@@ -8,19 +8,19 @@
 The function estimates the model parameters of a 1-D continuous lag spatial Markov chain by the use of the mean length method. Transition rates matrix along a user defined direction and proportions of categories are computed.
 }
 
-\usage{tpfit_ml(data, coords, direction, tolerance = pi/8, mle = FALSE)}
+\usage{tpfit_ml(data, coords, direction, tolerance = pi/8, mle = "trm")}
 
 \arguments{
 %%         data vector of data
 %%       coords coordinates matrix
 %%    direction vector (or versor) of chosen direction
 %%    tolerance angle tolerance (in radians)
-%%          mle logical value to pass to the function mlen
+%%          mle argument to pass to the function mlen
   \item{data}{a categorical data vector of length \eqn{n}{n}.}
   \item{coords}{an \eqn{n \times d}{n x d} matrix where each row denotes the \eqn{d}{d}-D coordinates of data locations.}
   \item{direction}{a \eqn{d}{d}-D numerical vector (or versor) which represents the chosen direction.}
   \item{tolerance}{a numerical value for the tolerance angle (in radians). It's \code{pi/8} by default.}
-  \item{mle}{a logical value to pass to the function \code{\link{mlen}}. It is \code{FALSE} by default.}
+  \item{mle}{a character value to pass to the function \code{\link{mlen}}. It is \code{"trm"} by default.}
 }
 
 \details{
@@ -38,7 +38,7 @@ The off-diagonal transition rates of the matrix \eqn{R}{R} are estimated by the 
 \deqn{\hat{r}_{jk} = \frac{\pi_{jk}}{\bar{L}_k}, \quad \forall j \neq k, }{r_(kk) = pi_(jk) / L_k,   for all j != k,}
 where \eqn{\pi_{jk}}{pi_(jk)} is a specific embedded transition probability.
 
-When some entries of the matrix \eqn{R}{R} are not identifiable, it is suggested to vary the \code{tolerance} coefficient or to set to \code{TRUE} the input argument \code{mle}.
+When some entries of the matrix \eqn{R}{R} are not identifiable, it is suggested to vary the \code{tolerance} coefficient or to set the input argument \code{mle} to \code{"mlk"}.
 }
 
 \value{
