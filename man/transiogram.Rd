@@ -32,6 +32,7 @@ A generic pair of sample points \eqn{s_i}{s_i} and \eqn{s_j}{s_j}, where \eqn{i 
 \value{
 An object of the class \code{transiogram} is returned. The function \code{\link{print.transiogram}} is used to print computed probabilities. The object is a list with the following components: 
   \item{Tmat}{a 3-D array containing the probabilities.}
+  \item{LOSE}{a 3-D array containing the standard error calculated for the log odds of the transition probabilities.}
   \item{lags}{a vector containing one-dimensional lags.}
   \item{type}{a character string which specifies that computed probabilities are empirical.}
 }

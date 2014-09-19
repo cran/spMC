@@ -1,5 +1,42 @@
 spMC News
 
+CHANGES IN spMC 0.3.4
+
+  BUG FIXES:
+    o an uninitialized variable was fixed in the C procedure
+      "transCount" when dealing with OpenMP 3.1.
+
+    o unused variabels were removed from the C procedure "nsph2".
+
+    o unused values were fixed in the C procedures "nsph2" and 
+      "nsph".
+
+CHANGES IN spMC 0.3.3
+
+  NEW FEATURES: 
+    o quench() function is introduced to reproduce the optimizations
+      algorithms, which are required for removing spatial artifacts
+      from the simulations.
+
+    o transiogram() function computes also the log-odds standard error
+      which will be used to draw confidence intervals for transition
+      probabilities.
+
+    o plot.transiogram() can draw confidence intervals around
+      empirical transition probabilities.
+
+  BUG FIXES:
+    o transiogram() has increased accuracy on non-autotransition
+      probabilities calculation.
+
+    o pemt() has improved probabilities calculation for multiple
+      directions.
+
+  DEPRECATED AND DEFUNCT:
+    o the arguments GA, optype and max.it in functions sim_ik() and
+      sim_ck() are defunct. Simulation optimization is performed by
+      the quench() function.
+
 CHANGES IN spMC 0.3.2
 
   NEW FEATURES: 

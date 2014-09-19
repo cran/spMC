@@ -1,14 +1,17 @@
 plot.transiogram <-
-function(x, ..., main, legend = FALSE) {
+function(x, ..., main, legend = FALSE, ci = NULL) {
   # Plot transition probabilities matrixes 1D
   #
   #          x transiogram object
   #        ... other args to pass to plot()
   #       main title string
   #     legend number of points per axes
+  #         ci confidence intervall significance (e.g. `ci = 0.95`)
 
   n <- dim(x$Tmat)[1]
-  
+  if (!is.null(ci)) {
+    if (ci >= 1 | ci <= 0) stop("\"ci\" must be a number between 0 and 1")
+  }
   if (missing(main) || !is.character(main)) main <- "One-dimensional transiogram"
   
   ly <- matrix(c(rep(1, n), rep(0, n), 2:(n^2+1), rep(n^2+3, n), rep(n^2+4, n)), ncol = n, byrow = TRUE)
@@ -22,12 +25,29 @@ function(x, ..., main, legend = FALSE) {
     heights <- heights[-n^2-4]
   }
   ly <- layout(ly, widths = widths, heights = heights, respect = TRUE)
-  
+
   par(mar=c(0.3, 0.1, 0.3, 0.1))
   plot.new()
   text(0.5, 0.5, main, cex = 2)
 
   nomi <- colnames(x$Tmat)
+
+  UppBnd <- NULL #upper bound
+  LowBnd <- NULL #lower bound
+  if(!is.null(x$LOSE) & !is.null(ci)) {
+    a <- .5 - ci * .5
+    LogOdds <- .C('transLogOdds', mdim = as.integer(dim(x$LOSE)), 
+                  empTR = as.double(x$Tmat), empTLO = double(prod(dim(x$LOSE))),
+                  NAOK = TRUE, PACKAGE = "spMC")$empTLO
+    UppBnd <- LogOdds - qnorm(a) * x$LOSE
+    LowBnd <- LogOdds + qnorm(a) * x$LOSE
+    UppBnd <- array(.C('LogOddstrans', mdim = as.integer(dim(x$LOSE)),
+                       empTLO = as.double(UppBnd),  empTR = as.double(UppBnd),
+                       NAOK = TRUE, PACKAGE = "spMC")$empTR, dim = dim(x$LOSE))
+    LowBnd <- array(.C('LogOddstrans', mdim = as.integer(dim(x$LOSE)),
+                       empTLO = as.double(LowBnd), empTR = as.double(LowBnd),
+                       NAOK = TRUE, PACKAGE = "spMC")$empTR, dim = dim(x$LOSE))
+  }
 
   par(mar = 2 * (rep(1.25, 4) + c(1, 1, 0, 0)) / n)
   xpos <- mean(range(na.omit(x$lags)))
@@ -36,6 +56,14 @@ function(x, ..., main, legend = FALSE) {
       myseq <- na.omit(cbind(x$lags, x$Tmat[j, k, ]))
       if(dim(myseq)[1] != 0) {
         plot(myseq[, 1], myseq[, 2], ylab = "", xlab = "", ..., ylim = 0:1, axes = FALSE)
+        if(!is.null(LowBnd)) {
+          myseq <- na.omit(cbind(x$lags, LowBnd[j, k, ]))
+          lines(myseq[, 1], myseq[, 2], lty = 2, ...)
+        }
+        if(!is.null(UppBnd)) {
+          myseq <- na.omit(cbind(x$lags, UppBnd[j, k, ]))
+          lines(myseq[, 1], myseq[, 2], lty = 2, ...)
+        }
       }
       else {
         plot.new()

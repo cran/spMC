@@ -72,14 +72,12 @@ mygrid <- as.matrix(expand.grid(mygrid$X, mygrid$Y, mygrid$Z))
 # Simulate the random field through
 # Simple Indicator Cokriging algorithm and
 # optimize by Simulated Annealing
-myANSimP <- sim_ck(x, ACM$MAT5, ACM[, 1:3], mygrid, ordinary = FALSE, optype = "param", max.it = 2)
-myANSimF <- sim_ck(x, ACM$MAT5, ACM[, 1:3], mygrid, ordinary = FALSE, optype = "fullprobs", max.it = 2)
+myANSimP <- sim_ck(x, ACM$MAT5, ACM[, 1:3], mygrid)
 
 # Simulate the random field through
 # Ordinary Indicator Cokriging algorithm and
 # optimize by Genetic Algorithm
-myGASimS <- sim_ck(x, ACM$MAT5, ACM[, 1:3], mygrid, GA = TRUE, optype = "semiprobs", max.it = 2)
-myGASimC <- sim_ck(x, ACM$MAT5, ACM[, 1:3], mygrid, GA = TRUE, optype = "coordprobs", max.it = 2)
+myGASimS <- sim_ck(x, ACM$MAT5, ACM[, 1:3], mygrid)
 
 ### Name: density.lengths
 ### Title: Empirical Densities Estimation of Stratum Lengths
@@ -117,14 +115,16 @@ hist(gl)
 # Simulate the random field through
 # Simple Indicator Kriging algorithm and
 # optimize by Simulated Annealing
-myANSimP <- sim_ik(x, ACM$MAT5, ACM[, 1:3], mygrid, ordinary = FALSE, optype = "param", max.it = 2)
-myANSimF <- sim_ik(x, ACM$MAT5, ACM[, 1:3], mygrid, ordinary = FALSE, optype = "fullprobs", max.it = 2)
+myANSimP <- sim_ik(x, ACM$MAT5, ACM[, 1:3], mygrid, ordinary = FALSE)
+myANSimP <- quench(x, ACM$MAT5, ACM[, 1:3], myANSimP, optype = "param", max.it = 2)
+myANSimF <- quench(x, ACM$MAT5, ACM[, 1:3], myANSimP, optype = "fullprobs", max.it = 2)
 
 # Simulate the random field through
 # Ordinary Indicator Kriging algorithm and
 # optimize by Genetic Algorithm
-myGASimS <- sim_ik(x, ACM$MAT5, ACM[, 1:3], mygrid, GA = TRUE, optype = "semiprobs", max.it = 2)
-myGASimC <- sim_ik(x, ACM$MAT5, ACM[, 1:3], mygrid, GA = TRUE, optype = "coordprobs", max.it = 2)
+myGASimS <- sim_ik(x, ACM$MAT5, ACM[, 1:3], mygrid)
+myGASimS <- quench(x, ACM$MAT5, ACM[, 1:3], myGASimS, GA = TRUE, optype = "semiprobs", max.it = 2)
+myGASimC <- quench(x, ACM$MAT5, ACM[, 1:3], myGASimS, GA = TRUE, optype = "coordprobs", max.it = 2)
 
 ### Name: tpfit_ils
 ### It will be tested during the multi_tpfit_ils() example
@@ -374,8 +374,8 @@ graphics::par(get("par.postscript", pos = 'CheckExEnv'))
 
 ### ** Examples
 
-# Plot empirical transition probabilities
-plot(ETr, type = "l")
+# Plot empirical transition probabilities with confidence interval
+plot(ETr, type = "l", ci = .95)
 
 # Plot theoretical transition probabilities
 plot(TPr, type = "l")

@@ -1,339 +1,11 @@
-#if defined _OPENMP
-  #if (_OPENMP > 200800)
-    #include <omp.h>
-    #define __VOPENMP 1
-  #else
-    #define __VOPENMP 0
-  #endif
-#else
-  #define __VOPENMP 0
-#endif
-#include <stdio.h>
-#include <R.h>
-#include <Rmath.h>
-#include <Rinternals.h>
-#include <R_ext/Lapack.h>
-#include <R_ext/Boolean.h>
+/* Declaration of prototypes and library used by spMC */
 #include "spMC.h"
 
-int *wo = NULL, *pv = NULL;
-double *h = NULL, *p = NULL, *TtLag = NULL, *tmpMat = NULL;
-char myMemErr[] = "There is not enough empty memory";
+/* Inclusion of functions for direction classification */
+#include "wfun.h"
 
-#if __VOPENMP
-  #pragma omp threadprivate(wo, pv, h, p, TtLag, tmpMat)
-#endif
-
-void transCount(int *n, int *data, int *nc, double *coords, double *dire, double *tolerance,
-                int *mpoints, double *bins, int *nk, double *trans) {
-  /* Counting occurrences with the same direction     
-          *n - sample size
-       *data - vector of data
-         *nc - dimension of the sample space
-     *coords - matrix of coordinates
-       *dire - fixed direction vector
-  *tolerance - angle tolecrance in radians
-    *mpoints - number of estimation points
-       *bins - vector of lags
-         *nk - number of categories
-      *trans - tensor of transaction ocuurrences */
-
-  int i, j, x, xh, ToF;
-  double *d = NULL;
-
-#if __VOPENMP
-  #pragma omp parallel shared(nc, myMemErr)
-  {
-#endif
-    if ((h = (double *) malloc(*nc * sizeof(double))) == NULL) {
-#if __VOPENMP
-      #pragma omp critical
-#endif
-      error("%s", myMemErr);
-    }
-    if ((p = (double *) malloc(*nc * sizeof(double))) == NULL) {
-#if __VOPENMP
-      #pragma omp critical
-#endif
-      error("%s", myMemErr);
-    }
-#if __VOPENMP
-  }
-#endif
-
-  if ((d = (double *) calloc(*nc, sizeof(double))) == NULL) {
-#if __VOPENMP
-    #pragma omp critical
-#endif
-    error("%s", myMemErr);
-  }
-
-  nsph(nc, dire, d); // polar transformation of dire
-
-#if __VOPENMP
-  #pragma omp parallel for default(shared) private(i, j, x, xh, ToF) schedule(static, 1)
-#endif
-  for (x = 0; x < *n - 1; x++) {        // These cilces are relative to
-    for (xh = x + 1; xh < *n; xh++) {   // each pair of observations
-
-      /* Computing of h vector and it's polar transformation */
-      for (i = *nc - 1; i >= 0; i--) {
-        h[i] = coords[*n * i + x] - coords[*n * i + xh];
-        p[i] = 0.0; // polar coordinates
-      }
-      nsph(nc, h, p); // polar transformation of h
-
-      /* Counting occurence */
-      ToF = 1;
-      for (j = 1; j < *nc; j++) {
-        if (!ISNAN(d[j])) {
-          ToF &= (p[j] >= d[j] - fabs(*tolerance));
-          ToF &= (p[j] <= d[j] + fabs(*tolerance));
-        }
-      }
-      if (ToF != 0) {
-        for (i = 0; i < *mpoints; i++) {
-          if (p[0] <= bins[i]) {
-#if __VOPENMP
-            #pragma omp critical
-            {
-#endif
-              ++trans[data[x] - 1 + *nk * (data[xh] - 1) + *nk * *nk * i];
-#if __VOPENMP
-            }
-#endif
-            break;
-          }
-        }
-      }
-
-    }
-  }
-
-#if __VOPENMP
-  #pragma omp parallel
-  {
-#endif
-    free(h);
-    free(p);
-#if __VOPENMP
-  }
-#endif
-  free(d);
-
-}
-
-void transProbs(int *mpoints, int *nk, double *rwsum, double *empTR) {
-  /* Computing transition probabilities
-      *mpoints - number of estimation points
-           *nk - number of categories
-        *rwsum - dimension of the sample space
-        *empTR - tensor of transaction probabilities */
-
-  int i, j, k;
-
-#if __VOPENMP
-  #pragma omp parallel for default(shared) private(i, j, k) schedule(static, 1)
-#endif
-  for (i = 0; i < *mpoints; i++) {
-    for (j = 0; j < *nk; j++) {
-      for (k = 0; k < *nk; k++) {
-        empTR[*nk * k + j + *nk * *nk * i] /= rwsum[*nk * i + j];
-      }
-    }
-  }
-
-}
-
-void revtProbs(double *dmat, int *idim) {
-  int i, j, k, pos, cpos;
-  double tsum, tmp;
-#if __VOPENMP
-  #pragma omp parallel for default(shared) private(pos, cpos, i, j, k, tsum, tmp) schedule(static, 1)
-#endif
-  for (i = 0; i < idim[2]; i++) {
-    pos = *idim * *idim * i;
-    for (j = 0; j < *idim; j++) {
-      cpos = pos + *idim * j;
-      for (k = 0, tsum = 0.0; k < *idim; k++) { // transposition
-        tmp = dmat[cpos + k];
-        tsum += tmp;
-        if (k > j) {
-          dmat[cpos + k] = dmat[pos + *idim * k + j];
-          dmat[pos + *idim * k + j] = tmp;
-        }
-      }
-      for (k = 0; k < *idim; k++) { // normalisation
-        dmat[pos + *idim * k + j] /= tsum;
-      }
-    }
-  }
-  pos = *idim * *idim;
-#if __VOPENMP
-  #pragma omp parallel for default(shared) private(i, j, k, tmp) schedule(static, 1)
-#endif
-  for (i = 0; i < idim[2] / 2; i++) { // revert the probabilities in the array
-    k = idim[2] - i - 1;
-    for (j = 0; j < pos; j++) {
-      tmp = dmat[pos * k + j];
-      dmat[pos * k + j] = dmat[pos * i + j];
-      dmat[pos * i + j] = tmp;
-    }
-  }
-
-}
-
-void wl(int *n, int *nc, double *coords, double *dire, double *tolerance, int *id) {
-  /* Computing segments indicator 
-          *n - sample size
-         *nc - dimension of the sample space
-     *coords - matrix of coordinates
-       *dire - fixed direction vector
-  *tolerance - angle tolecrance in radians
-         *id - location id */
-
-  // This function will be used for classifying coordinates according to a common line
-  int x, xh, i, ToF, mpos;
-  double mymin = 0.0, *d = NULL, *mdst = NULL;
-
-  // memory allocation of vectors needed 
-#if __VOPENMP
-  #pragma omp parallel shared(nc, myMemErr)
-  {
-#endif
-    if ((h = (double *) malloc(*nc * sizeof(double))) == NULL) {
-#if __VOPENMP
-      #pragma omp critical
-#endif
-      error("%s", myMemErr);
-    }
-    if ((p = (double *) malloc(*nc * sizeof(double))) == NULL) {
-#if __VOPENMP
-      #pragma omp critical
-#endif
-      error("%s", myMemErr);
-    }
-#if __VOPENMP
-  }
-#endif
-
-  if ((d = (double *) malloc(*nc * sizeof(double))) == NULL) {
-#if __VOPENMP
-    #pragma omp critical
-#endif
-    error("%s", myMemErr);
-  }
-  
-  for (i = 0; i < *nc; i++) d[i] = 0.0; // initialization of polar coordinate vector
-  nsph(nc, dire, d); // polar transformation of dire (the principal direction)
-  for (x = 0; x < *n - 1; x++) { 
-    if (id[x] == 0) id[x] = x + 1;
-    if ((mdst = (double *) malloc((*n - x - 1) * sizeof(double))) == NULL) {
-#if __VOPENMP
-      #pragma omp critical
-#endif
-      error("%s", myMemErr);
-    }
-#if __VOPENMP
-    #pragma omp parallel for default(shared) private(xh, i, ToF) schedule(static, 1)
-#endif
-    for (xh = x+1; xh < *n; xh++) {
-      for (i = *nc - 1; i >= 0; i--) {
-        h[i] = coords[*n * i + x] - coords[*n * i + xh];
-        p[i] = 0.0; // polar coordinates
-      }
-      nsph(nc, h, p); // polar transformation of h
-      ToF = 1;
-      for (i = 1; i < *nc; i++) {
-        if (!ISNAN(d[i]) && !ISNAN(p[i])) {
-          if (fabs(d[i]) != PI / 2.0) { 
-            ToF &= (p[i] >= d[i] - fabs(*tolerance));
-            ToF &= (p[i] <= d[i] + fabs(*tolerance));
-          }
-          else {
-            ToF &= (fabs(p[i]) >= PI / 2.0 - fabs(*tolerance));
-          }
-        }
-      }
-      if (ToF) {
-        mdst[xh - x - 1] = p[0];
-      }
-      else {
-        mdst[xh - x - 1] = -p[0];
-      }
-    }
-    mpos = -1;
-    for (xh = x+1; xh < *n; xh++) {
-      if (mdst[xh - x - 1] >= 0.0) {
-        mymin = mdst[xh - x - 1];
-        mpos = xh;
-        break;
-      }
-    }
-    for (xh++; xh < *n; xh++) {
-      if ((mdst[xh - x - 1] < mymin) && (mdst[xh - x - 1] >= 0.0)) {
-        mymin = mdst[xh - x - 1];
-        mpos = xh;
-      }
-    }
-    if (mpos > -1) {
-      id[mpos] = id[x];
-    }
-    free(mdst);
-  }
-
-#if __VOPENMP
-  #pragma omp parallel
-  {
-#endif
-    free(h);
-    free(p);
-#if __VOPENMP
-  }
-#endif
-  free(d);
-
-}
-
-void nsph(int *di, double *x, double *res) {
-  /* Computing polar transformation
-         *di - number of coordinates to transform
-          *x - vector of coordinates
-        *res - transformed vector */
-
-  int i, j;
-
-  if (*di > 0 && *di < 2) *res == *x;
-//   if (*di >= 2) {
-//     res[*di - 1] = atan(x[*di - 1] / x[*di - 2]);
-//     for (i = *di - 2; i >= 0; i--) {
-//       res[i] = 0.0;
-//       for (j = *di - 1; j >= i; j--) {
-//         res[i] += x[j] * x[j];
-//       }
-//       res[i] = sqrt(res[i]);
-//       if (i != 0) res[i] = atan(res[i] / x[j]);
-//     }
-//   }
-  if (*di >= 2) { // Angles calculations
-   *res = *x * *x;
-   *res +=  x[1] * x[1];
-   res[1] = atan2(*x, x[1]); // the first angle
-    for (i = 2; i < *di; i++) {
-      *res += x[i] * x[i];
-      res[i] = acos(x[i] / sqrt(*res));
-    }
-    // Radius computation
-    *res = sqrt(*res);
-  }
-//   library(spMC)
-//   p2c <- function(x) {
-//     x[1] * c(sin(x[2]) * sin(x[3]), cos(x[2]) * sin(x[3]), cos(x[3])) 
-//   }
-//   .C("nsph", 3L, c(1,1,1), p = c(0,0,0))$p -> x
-//   p2c(x)
-
-}
+/* Inclusion of functions for empirical transiograms */
+#include "trans.h"
 
 void cEmbedLen(int *n, int *nc, double *coords, int *locId, int *data, int *cemoc, double *maxcens, double *tlen) {
   /* Computing strata lengths (i.e. mean lengths)
@@ -421,7 +93,7 @@ void cEmbedOc(int *n, int *nc, int *nk, double *coords, int *locId, int *data, i
           for (j = 1; j < *nc; j++) {
             tmptl += pow(coords[*n * j + i - 1] - coords[*n * j + i], 2.0);
           }
-          tlen[data[i] - 1] += sqrt(tmptl);
+          tlen[data[i] - 1] += sqrt(fabs(tmptl));
         }
       }
 #if __VOPENMP
@@ -490,9 +162,9 @@ void ellinter(int *nc, int *nk, double *hh, double *coef, double *Rmat) {
       Rmat[*nk * j + k] = 0.0;
       if (j != k) {
         for (i = 0; i < *nc; i++) {
-          Rmat[*nk * j + k] += R_pow(coef[*nk * *nk * i + *nk * j + k] * hh[i], 2.0);
+          Rmat[*nk * j + k] += pow(coef[*nk * *nk * i + *nk * j + k] * hh[i], 2.0);
         }
-        Rmat[*nk * j + k] = R_pow(Rmat[*nk * j + k], 0.5);
+        Rmat[*nk * j + k] = pow(fabs(Rmat[*nk * j + k]), 0.5);
       }
     }
   }
@@ -536,7 +208,13 @@ void fastMatProd(int *nr, int *ni, double *mat1, int *nc, double *mat2, double *
   int i, j, k;
 
 #if __VOPENMP
-  #pragma omp parallel for default(shared) private(i, j, k) schedule(static, 1)
+  #if (_OPENMP > 201100)
+    #pragma omp parallel for default(shared) private(i, j, k) collapse(2) schedule(static, 1)
+  #else
+    #if (_OPENMP > 200800)
+      #pragma omp parallel for default(shared) private(i, j, k) schedule(static, 1)
+    #endif
+  #endif
 #endif
   for (i = 0; i < *nr; i++) {
     for (j = 0; j < *nc; j++) {
@@ -1642,58 +1320,6 @@ void predMULTI(double *coefficients, double *prop, double *lags, int *nk, int *n
   }
 
   free(mycoef);
-}
-
-void wd(double *lags, int *nc, int *nr, int *res) {
-  /* Find points with the same direction 
-       *lags - matrix whose columns are lags
-         *nc - sample space dimension
-         *nr - number of lags
-        *res - location id */
-
-  int i, j, k, ToF;
-  double *plags;
-
-  if ((plags = (double *) malloc(*nr * *nc * sizeof(double))) == NULL) {
-#if __VOPENMP
-    #pragma omp critical
-#endif
-    error("%s", myMemErr);
-  }
-
-#if __VOPENMP
-  #pragma omp parallel for default(shared) private(i, j) schedule(static, 1)
-#endif
-  for (i = 0; i < *nr; i++) {
-    for (j = 0; j < *nc; j++) plags[*nc * i + j] = 0.0;
-    nsph(nc, &lags[*nc * i], &plags[*nc * i]);
-  }
-  for (i = 0; i < *nr - 1; i++) {
-    if (res[i] == 0) {
-      res[i] = i + 1;
-#if __VOPENMP
-      #pragma omp parallel for default(shared) private(j, k, ToF) schedule(static, 1)
-#endif
-      for (j = i + 1; j < *nr; j++) {
-        if (res[j] == 0) {
-          ToF = 1;
-          for (k = 1; k < *nc; k++) {
-            if (!ISNAN(plags[*nc * i + k]) && !ISNAN(plags[*nc * j + k])) {
-              ToF &= (plags[*nc * i + k] == plags[*nc * j + k]);
-            }
-            else {
-              if(!ISNAN(plags[*nc * i + k]) || !ISNAN(plags[*nc * j + k])) ToF = 0;
-            }
-          }
-          if (ToF) {
-            res[j] = i + 1;
-          }
-        }
-      }
-    }
-  }
-  if (res[*nr - 1] == 0) res[*nr - 1] = *nr;
-  free(plags);
 }
 
 void predPSEUDOVET(double *coefficients, double *revcoef, int *nk, int *nc, int *whichd, double *lag, double *pred) {

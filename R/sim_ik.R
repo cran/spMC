@@ -1,5 +1,5 @@
 "sim_ik" <- 
-function(x, data, coords, grid, knn = 12, ordinary = TRUE, GA = FALSE, optype = c("param", "fullprobs", "semiprobs", "coordprobs"), max.it = 1000) {
+function(x, data, coords, grid, knn = 12, ordinary = TRUE) {
   # Generation of conditional simulation based on Kriging
   #
   #        x a multi_tpfit object
@@ -31,7 +31,7 @@ function(x, data, coords, grid, knn = 12, ordinary = TRUE, GA = FALSE, optype = 
   data <- as.integer(data)
   storage.mode(coords) <- "double"
   storage.mode(grid) <- "double"
-  if (length(optype) > 1) optype <- optype[1]
+#   if (length(optype) > 1) optype <- optype[1]
 
   dire.mat <- diag(, nc)
   new.coords <- coords
@@ -84,84 +84,9 @@ function(x, data, coords, grid, knn = 12, ordinary = TRUE, GA = FALSE, optype = 
   initSim <- .C('tsimCate', nk = as.integer(nk), n = as.integer(nrs), prhat = as.double(probs),
      initSim = as.integer(initSim), PACKAGE = "spMC")$initSim
 
-  # OPTIMIZATION PROCEDURE #
-  toOptim <- function(x, mySim, grid) {
-    xnew <- list()
-    xnew$coefficients <- lapply(1:nc, function(i) {
-      ml <- mlen(mySim, grid, loc.id[, i], dire.mat[i, ])
-      Rmat <- embed_MC(mySim, grid, loc.id[, i], dire.mat[i, ])
-      diag(Rmat) <- -1
-      Rmat <- diag(1 / ml) %*% Rmat
-      return(Rmat)
-    })
-    xnew$prop <- table(mySim)
-    xnew$prop <- xnew$prop / sum(xnew$prop)
-    if(length(unlist(x$coefficients)) != length(unlist(xnew$coefficients))) return(Inf)
-    if(length(unlist(x$prop)) != length(unlist(xnew$prop))) return(Inf)
-    return(sum((unlist(xnew$coefficients) - unlist(x$coefficients))^2) + sum((xnew$prop - x$prop)^2))
-  }
-  if(optype == "fullprobs") {
-    toOptim <- function(x, mySim, grid) {
-      res <- 0
-      res <- .C('objfun', nrs = as.integer(nrs), nk = as.integer(nk), nc = as.integer(nc),
-         mySim = as.integer(mySim), grid = as.double(grid),
-         coef = as.double(unlist(x$coefficients)), prop = as.double(x$prop),
-         res = as.double(res), PACKAGE = "spMC")$res
-      return(res)
-    }
-  }
-  if(optype == "semiprobs") {
-    sknn <- knn + 1L
-    storage.mode(sknn) <- "integer"
-    if(nrs < sknn) sknn <- nrs
-    indicesim <- matrix(0L, nrow = sknn, ncol = nrs)
-    indicesim <- matrix(.C('knear', nc = as.integer(nc), nr = as.integer(nrs),
-                         coords = as.double(new.grid), nrs = as.integer(nrs),
-                         grid = as.double(new.grid), knn = as.integer(sknn),
-                         indices = as.integer(indicesim),
-                         PACKAGE = "spMC")$indices,
-                      nrow = sknn, ncol = nrs)
-    sknn <- sknn - 1L
-    toOptim <- function(x, mySim, grid) {
-      res <- 0
-      res <- .C('fastobjfun', knn = as.integer(sknn),
-         indices = as.integer(indicesim[-1L, ]), nrs = as.integer(nrs), nk = as.integer(nk),
-         nc = as.integer(nc), nr = as.integer(nrs), mySim = as.integer(mySim),
-         grid = as.double(grid), coef = as.double(unlist(x$coefficients)),
-         prop = as.double(x$prop), data = as.integer(mySim), coords = as.double(grid),
-         res = as.double(res), PACKAGE = "spMC")$res
-      return(res)
-    }
-  }
-  if(optype == "coordprobs") {
-    toOptim <- function(x, mySim, grid) {
-      res <- 0
-      res <- .C('fastobjfun', knn = as.integer(knn), indices = as.integer(indices),
-         nrs = as.integer(nrs), nk = as.integer(nk), nc = as.integer(nc), nr = as.integer(nr),
-         mySim = as.integer(mySim), grid = as.double(grid),
-         coef = as.double(unlist(x$coefficients)), prop = as.double(x$prop),
-         data = as.integer(data), coords = as.double(coords), res = as.double(res),
-         PACKAGE = "spMC")$res
-      return(res)
-    }
-  }
-  if (max.it > 0 & !(optype %in% c("fullprobs", "semiprobs", "coordprobs"))) {
-    loc.id <- apply(dire.mat, 1, function(d) which_lines(grid, d, tolerance = x$tolerance))
-  }
-  storage.mode(initSim) <- "integer"
-  storage.mode(max.it) <- "integer"
-  Rnv <- new.env()
-  Rnv <- parent.env(Rnv)
-
-  if (!GA) { # SIMULATED ANNEALING #
-    old <- .Call("annealingSIM", max.it, initSim, x, grid, quote(toOptim(x, pp, grid)), Rnv, PACKAGE = "spMC")
-  }
-  else {     # GENETIC ALGORITHM #
-    old <- .Call("geneticSIM", max.it, initSim, x, grid, quote(toOptim(x, pp, grid)), Rnv, PACKAGE = "spMC")
-  }
   tmpfct <- 1:nk
   tmpfct <- factor(tmpfct, labels = levLabels)
-  old <- tmpfct[old]
+  old <- tmpfct[initSim]
   pred <- tmpfct[pred]
   res <- data.frame(grid, old, pred, probs)
   names(res) <- c(colnames(coords), "Simulation", "Prediction", levLabels)

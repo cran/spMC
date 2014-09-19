@@ -8,9 +8,8 @@
 The function simulates a random field through the Indicator Cokriging technique.
 }
 
-\usage{sim_ck(x, data, coords, grid, knn = 12, ordinary = TRUE,
-       GA = FALSE, optype = c("param", "fullprobs", "semiprobs", 
-       "coordprobs"), max.it = 1000)}
+\usage{
+sim_ck(x, data, coords, grid, knn = 12, ordinary = TRUE)}
 
 \arguments{
 %%        x a multi_tpfit object
@@ -28,9 +27,6 @@ The function simulates a random field through the Indicator Cokriging technique.
   \item{grid}{an \eqn{m \times d}{m x d} matrix where each row denotes the \eqn{d}{d}-D coordinates in the simulation grid.}
   \item{knn}{an integer value which specifies the number of k-nearest neighbours for each simulation point. An optimal number is between 4 and 12. If \code{NULL} all observations are considered (just for very small dataset!!). It is \code{12} by default.}
   \item{ordinary}{a logical value; if \code{FALSE}, the probabilities are computed through the Simple coKriging technique, otherwise the Ordinary coKriging method is used.}
-  \item{GA}{a logical value; if \code{TRUE}, the function performs the Genetic Algorithm instead of the Simulated Annealing.}
-  \item{optype}{a character which denotes the objective function to compute when the optimization is performed.}
-  \item{max.it}{a numerical value which specifies the maximum number of iterations to stop the optimization algorithm.}
 }
 
 \details{
@@ -42,7 +38,7 @@ The probability is calculated as the weighted sum of indicator variables which d
 
 Probabilities approximated are usually truncated and normalized with respect to the probability constraints, because such probabilities might lie outside the interval \eqn{[0, 1]}{[0, 1]}. The normalization procedure is designed such that it is not possible to obtain vectors such that the sum of their probabilities is always equal to one.
 
-When an initial configuration is simulated, it is modified to reach a pattern similar to the sample by the use of simulated annealing or genetic algorithm. This procedure may be skipped by setting \code{max.it} equal to zero. There are several objective functions for this purpose, by setting \code{optype} equal to \code{"param"} the optimization is performed through parametric methods. The alternatives \code{"fullprobs"} and \code{"semiprobs"} are based on transition probabilities computed among simulation points, while the option \code{"coordprobs"} is based on transition probabilities calculated among observation and simulation points.
+When an initial configuration is simulated, it should be modified to reach a pattern similar to the sample by the use of the \code{\link{quench}} function.
 }
 
 \value{A data frame containing the simulation grid, the simulated random field, predicted values and the approximated probabilities.}
@@ -79,15 +75,12 @@ mygrid$Z <- -40 * 0:9 - 1
 mygrid <- as.matrix(expand.grid(mygrid$X, mygrid$Y, mygrid$Z))
 
 # Simulate the random field through
-# Simple Indicator Cokriging algorithm and
-# optimize by Simulated Annealing
-myANSim <- sim_ck(x, ACM$MAT5, ACM[, 1:3], mygrid, ordinary = FALSE)
-
+# Simple Indicator Cokriging algorithm
+mySCKSim <- sim_ck(x, ACM$MAT5, ACM[, 1:3], mygrid, ordinary = FALSE)
 
 # Simulate the random field through
-# Ordinary Indicator Cokriging algorithm and
-# optimize by Genetic Algorithm
-myGASim <- sim_ck(x, ACM$MAT5, ACM[, 1:3], mygrid, GA = TRUE)
+# Ordinary Indicator Cokriging algorithm
+myOCKSim <- sim_ck(x, ACM$MAT5, ACM[, 1:3], mygrid)
 }}
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
