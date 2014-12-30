@@ -9,7 +9,7 @@ The function estimates the model parameters of a 1-D continuous lag spatial Mark
 }
 
 \usage{tpfit(data, coords, direction, method = "ml",
-      tolerance = pi/8, max.it = 9000, mle = "trm", ...)}
+      tolerance = pi/8, max.it = 9000, mle = "avg", ...)}
 
 \arguments{
 %%         data vector of data
@@ -32,7 +32,7 @@ The function estimates the model parameters of a 1-D continuous lag spatial Mark
   \item{method}{a character object specifying the method to estimata the transition rates. Possible choises are \code{"ml"} (by default) for the mean length method, \code{"ils"} for the iterated least squares and \code{"me"} for the maximum entropy method.}
   \item{tolerance}{a numerical value for the tolerance angle (in radians). It's \code{pi/8} by default.}
   \item{max.it}{a numerical value which denotes the maximum number of iterations to perform during the optimization phase. It is \code{9000} by default and used only when the method is \code{"me"}.}
-  \item{mle}{a character value to pass to the function \code{\link{mlen}}. It is \code{"trm"} by default and not use when the method is \code{"ils"}.}
+  \item{mle}{a character value to pass to the function \code{\link{mlen}}. It is \code{"avg"} by default and not use when the method is \code{"ils"}.}
   \item{\dots}{other arguments to pass to the functions \code{\link{tpfit_ml}}, \code{\link{tpfit_ils}} or \code{\link{tpfit_me}}.}
 }
 

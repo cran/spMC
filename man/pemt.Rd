@@ -9,7 +9,7 @@ The function computes the multi-directional transiograms without any ellipsoidal
 
 \usage{
 pemt(data, coords, mpoints, which.dire, max.dist,
-     tolerance = pi/8, rotation = NULL, mle = "trm")
+     tolerance = pi/8, rotation = NULL, mle = "avg")
 }
 
 \arguments{
@@ -28,7 +28,7 @@ pemt(data, coords, mpoints, which.dire, max.dist,
   \item{max.dist}{a scalar or a vector of maximum length for the chosen axial directions.}
   \item{tolerance}{a numerical value for the tolerance angle (in radians). It's \code{pi/8} by default.}
   \item{rotation}{a numerical vector of length \eqn{d - 1}{d - 1} with rotation angles (in radians), in order to perform the main axes rotation when multidimensional transiogram is estimated. No rotation is performed by default. See \code{\link{multi_tpfit_ml}}.}
-  \item{mle}{a character value to pass to the function \code{\link{tpfit_ml}}. It is \code{"trm"} by default.}
+  \item{mle}{a character value to pass to the function \code{\link{tpfit_ml}}. It is \code{"avg"} by default.}
 }
 
 \details{

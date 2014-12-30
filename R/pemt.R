@@ -1,6 +1,6 @@
 pemt <-
 function(data, coords, mpoints, which.dire, max.dist, tolerance = pi/8,
-         rotation = NULL, mle = "trm") {
+         rotation = NULL, mle = "avg") {
   # Compute transition probabilities matrices 2D
   # through no ellispoidal interpolation
   #

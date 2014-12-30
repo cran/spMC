@@ -1,9 +1,8 @@
 hist.lengths <-
 function (x, ..., log = FALSE, zeros.rm = TRUE) {
+  newlen <- x$length + 0
   if (zeros.rm & x$zeros) {
-    idx <- x$length != 0
-    x$categories <- x$categories[idx]
-    x$length <- x$length[idx]
+    newlen <- x$length + x$maxcens
   }
   args <- list(...)
   breaks <- "Sturges"
@@ -12,7 +11,7 @@ function (x, ..., log = FALSE, zeros.rm = TRUE) {
   if (!is.null(args$include.lowest)) include.lowest <- args$include.lowest
   right <- TRUE
   if (!is.null(args$right)) right <- args$right
-  res <- tapply(x$length, x$categories, function(Lengths) {
+  res <- tapply(newlen, x$categories, function(Lengths) {
            if (log) {
              LogLengths <- log(Lengths)
              hist(LogLengths, breaks = breaks, include.lowest = include.lowest,

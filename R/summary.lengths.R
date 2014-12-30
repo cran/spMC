@@ -1,11 +1,10 @@
 summary.lengths <-
 function (object, ..., zeros.rm = TRUE) {
+  newlen <- object$length + 0
   if (zeros.rm & object$zeros) {
-    idx <- object$length != 0
-    object$categories <- object$categories[idx]
-    object$length <- object$length[idx]
+    newlen <- object$length + object$maxcens
   }
-  res <- tapply(object$length, object$categories, function(p) summary(p, ...))
+  res <- tapply(newlen, object$categories, function(p) summary(p, ...))
   class(res) <- "summary.lengths"
   return(res)
 }

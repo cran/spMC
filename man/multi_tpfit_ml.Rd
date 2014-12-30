@@ -7,7 +7,7 @@
 \description{The function estimates the model parameters of a \eqn{d}{d}-D continuous lag spatial Markov chain. Transition rates matrices along axial directions and proportions of categories are computed.}
 
 \usage{multi_tpfit_ml(data, coords, tolerance = pi/8,
-               rotation = NULL, mle = "trm")}
+               rotation = NULL, mle = "avg")}
 
 \arguments{
 %%         data vector of data
@@ -19,7 +19,7 @@
   \item{coords}{an \eqn{n \times d}{n x d} matrix where each row denotes the \eqn{d}{d}-D coordinates of data locations.}
   \item{tolerance}{a numerical value for the tolerance angle (in radians). It's \code{pi/8} by default.}
   \item{rotation}{a numerical vector of length \eqn{d - 1}{d - 1} with rotation angles (in radians), in order to perform the main axes rotation. No rotation is performed by default.}
-  \item{mle}{a character value to pass to the function \code{\link{tpfit}}. It is \code{"trm"} by default.}
+  \item{mle}{a character value to pass to the function \code{\link{tpfit}}. It is \code{"avg"} by default.}
 }
 
 \details{

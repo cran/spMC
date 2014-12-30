@@ -9,7 +9,7 @@ The function estimates the model parameters of a 1-D continuous lag spatial Mark
 }
 
 \usage{tpfit_me(data, coords, direction, tolerance = pi/8,
-         max.it = 9000, mle = "trm")}
+         max.it = 9000, mle = "avg")}
 
 \arguments{
 %%         data vector of data
@@ -22,7 +22,7 @@ The function estimates the model parameters of a 1-D continuous lag spatial Mark
   \item{direction}{a \eqn{d}{d}-D numerical vector (or versor) which represents the chosen direction.}
   \item{tolerance}{a numerical value for the tolerance angle (in radians). It is \code{pi/8} by default.}
   \item{max.it}{a numerical value which denotes the maximum number of iterations to perform during the optimization phase. It is \code{9000} by default.}
-  \item{mle}{a character value to pass to the function \code{\link{mlen}}. It is \code{"trm"} by default.}
+  \item{mle}{a character value to pass to the function \code{\link{mlen}}. It is \code{"avg"} by default.}
 }
 
 \details{
@@ -54,7 +54,7 @@ data(ACM)
 
 # Estimate the parameters of a 
 # one-dimensional MC model
-tpfit_me(ACM$MAT5, ACM[, 1:3], c(0,0,1), 100)
+tpfit_me(ACM$MAT5, ACM[, 1:3], c(0,0,1))
 }}
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

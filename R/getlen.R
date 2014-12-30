@@ -42,6 +42,9 @@ function(data, coords, loc.id, direction, zero.allowed = FALSE) {
     lens$length <- lens$length[idx]
     lens$maxcens <- lens$maxcens[idx]
   }
+#   else {
+#     lens$length <- lens$length + lens$maxcens
+#   }
   lens$direction <- direction
   lens$zeros <- zero.allowed
   lens$cemoc <- NULL

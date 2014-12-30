@@ -45,7 +45,7 @@ function(x, data, coords, grid, knn = NULL) {
                 grid = as.double(grid), nrs = as.integer(nrs), nc = as.integer(nc),
                 nk = as.integer(nk), ndata = as.integer(data),
                 coefs = as.double(unlist(x$coefficients)), matdir = as.double(dire.mat),
-                rota = as.integer(!is.null(x$rotation)), pProbs = as.double(prhat),
+                rota = as.integer(!is.null(x$rotation)), pProbs = as.double(prhat), 
                 PACKAGE = "spMC")$pProbs
   }
   else {

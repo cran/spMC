@@ -1,13 +1,12 @@
 density.lengths <-
 function (x, ..., log = FALSE, zeros.rm = TRUE) {
   zrs <- x$zeros
+  newlen <- x$length + 0
   if (zeros.rm & x$zeros) {
-    idx <- x$length != 0
-    x$categories <- x$categories[idx]
-    x$length <- x$length[idx]
+    newlen <- x$length + x$maxcens
     zrs <- FALSE
   }
-  res <- tapply(x$length, x$categories, function (Lengths) {
+  res <- tapply(newlen, x$categories, function (Lengths) {
                 xx <- log(Lengths + .Machine$double.eps * zrs)
                 from <- min(xx)
                 to <- max(xx)

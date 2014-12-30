@@ -1,5 +1,5 @@
 multi_tpfit <-
-function(data, coords, method = "ml", tolerance = pi/8, rotation = NULL, max.it = 9000, mle = "trm", ...) {
+function(data, coords, method = "ml", tolerance = pi/8, rotation = NULL, max.it = 9000, mle = "avg", ...) {
   # Estimation for matrix of transition rates
   #
   #       data vector of data

@@ -1,11 +1,10 @@
 boxplot.lengths <-
 function (x, ..., log = FALSE, zeros.rm = TRUE) {
+  newlen <- x$length + 0
   if (zeros.rm & x$zeros) {
-    idx <- x$length != 0
-    x$categories <- x$categories[idx]
-    x$length <- x$length[idx]
+    newlen <- x$length + x$maxcens
   }
-  if (log) x$length <- log(x$length)
-  boxplot(x$length ~ x$categories, ...)
+  if (log) newlen <- log(newlen)
+  boxplot(newlen ~ x$categories, ...)
 }
 

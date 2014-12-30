@@ -46,14 +46,14 @@ void transCount(int *n, int *data, int *nc, double *coords, double *dire, double
 
 #if __VOPENMP
   #if (_OPENMP > 201100)
-    #pragma omp parallel for default(shared) private(i, j, x, xh, ToF) collapse(2) schedule(static, 1)
+    #pragma omp parallel for default(shared) private(i, j, x, xh, ToF) schedule(static, 1) collapse(2)
   #else
     #if (_OPENMP > 200800)
       #pragma omp parallel for default(shared) private(i, j, x, xh, ToF) schedule(static, 1)
     #endif
   #endif
 #endif
-  for (x = 0; x < *n - 1; x++) {        // These cilces are relative to
+  for (x = 0; x < *n; x++) {        // These cilces are relative to
     for (xh = 0; xh < *n; xh++) {   // each pair of observations
       if (x == xh) continue; // skip when the two points coincide
 
@@ -117,7 +117,7 @@ void transProbs(int *mpoints, int *nk, double *rwsum, double *empTR) {
 
 #if __VOPENMP
   #if (_OPENMP > 201100)
-    #pragma omp parallel for default(shared) private(i, j, k) collapse(3) schedule(static, 1)
+    #pragma omp parallel for default(shared) private(i, j, k) schedule(static, 1) collapse(3)
   #else
     #if (_OPENMP > 200800)
       #pragma omp parallel for default(shared) private(i, j, k) schedule(static, 1)
@@ -146,7 +146,7 @@ void transSE(int *mpoints, int *nk, double *rwsum, double *empTR, double *se) {
 
 #if __VOPENMP
   #if (_OPENMP > 201100)
-    #pragma omp parallel for default(shared) private(i, j, k) collapse(3) schedule(static, 1)
+    #pragma omp parallel for default(shared) private(i, j, k) schedule(static, 1) collapse(3)
   #else
     #if (_OPENMP > 200800)
       #pragma omp parallel for default(shared) private(i, j, k) schedule(static, 1)
@@ -175,7 +175,7 @@ void transLogOdds(int *mdim, double *empTR, double *empTLO) {
 
 #if __VOPENMP
   #if (_OPENMP > 201100)
-    #pragma omp parallel for default(shared) private(i, j, k, pos) collapse(3) schedule(static, 1)
+    #pragma omp parallel for default(shared) private(i, j, k, pos) schedule(static, 1) collapse(3)
   #else
     #if (_OPENMP > 200800)
       #pragma omp parallel for default(shared) private(i, j, k, pos) schedule(static, 1)
@@ -203,7 +203,7 @@ void LogOddstrans(int *mdim, double *empTLO, double *empTR) {
 
 #if __VOPENMP
   #if (_OPENMP > 201100)
-    #pragma omp parallel for default(shared) private(i, j, k, pos) collapse(3) schedule(static, 1)
+    #pragma omp parallel for default(shared) private(i, j, k, pos) schedule(static, 1) collapse(3)
   #else
     #if (_OPENMP > 200800)
       #pragma omp parallel for default(shared) private(i, j, k, pos) schedule(static, 1)
@@ -249,10 +249,11 @@ void revtProbs(double *dmat, int *idim) {
     }
   }
   pos = *idim * *idim;
+  cpos = idim[2] / 2;
 #if __VOPENMP
   #pragma omp parallel for default(shared) private(i, j, k, tmp) schedule(static, 1)
 #endif
-  for (i = 0; i < idim[2] / 2; i++) { // revert the probabilities in the array
+  for (i = 0; i < cpos; i++) { // revert the probabilities in the array
     k = idim[2] - i - 1;
     for (j = 0; j < pos; j++) {
       tmp = dmat[pos * k + j];

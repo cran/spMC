@@ -1,5 +1,5 @@
 tpfit_ml <-
-function(data, coords, direction, tolerance = pi/8, mle = "trm") {
+function(data, coords, direction, tolerance = pi/8, mle = "avg") {
   # Estimation for matrix of transition rates
   #          ( Mean Length Method )
   #

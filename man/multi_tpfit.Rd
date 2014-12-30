@@ -7,7 +7,7 @@
 \description{The function estimates the model parameters of a \eqn{d}{d}-D continuous lag spatial Markov chain. Transition rates matrices along axial directions and proportions of categories are computed.}
 
 \usage{multi_tpfit(data, coords, method = "ml", tolerance = pi/8,
-            rotation = NULL, max.it = 9000, mle = "trm", ...)}
+            rotation = NULL, max.it = 9000, mle = "avg", ...)}
 \arguments{
 %%         data vector of data
 %%       coords coordinates matrix
@@ -29,7 +29,7 @@
   \item{tolerance}{a numerical value for the tolerance angle (in radians). It's \code{pi/8} by default.}
   \item{rotation}{a numerical vector of length \eqn{d - 1}{d - 1} with rotation angles (in radians), in order to perform the main axes rotation. No rotation is performed by default.}
   \item{max.it}{a numerical value which denotes the maximum number of iterations to perform during the optimization phase. It is \code{9000} by default and used only when the method is \code{"me"}.}
-  \item{mle}{a character value to pass to the function \code{\link{tpfit}}. It is \code{"trm"} by default and not use when the method is \code{"ils"}.}
+  \item{mle}{a character value to pass to the function \code{\link{tpfit}}. It is \code{"avg"} by default and not use when the method is \code{"ils"}.}
   \item{\dots}{other arguments to pass to the functions \code{\link{multi_tpfit_ml}}, \code{\link{multi_tpfit_ils}} or \code{\link{multi_tpfit_me}}.}
 }
 

@@ -1,5 +1,5 @@
 multi_tpfit_me <-
-function(data, coords, tolerance = pi/8, max.it = 9000, rotation = NULL, mle = "trm") {
+function(data, coords, tolerance = pi/8, max.it = 9000, rotation = NULL, mle = "avg") {
   # Estimation for matrixes of transition rates
   #    ( Maximum Entropy Method )
   #

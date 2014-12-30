@@ -49,14 +49,12 @@ void predMULTI(double *, double *, double *, int *, int *, int*, double *);
 void predPSEUDOVET(double *, double *, int *, int *, int *, double *, double *);
 void predPSEUDO(double *, double *, double *, int *, int *, int *, int *, int *, int *, double *);
 void rotaH(int *, double *, double *);
-void jointProbsMCS(double *, int *, double *, int *, int *, int *, int *, double *, double *, int*, double *);
 void rotaxes(int *, double *, double *);
 void fastrss(int *, double *, double *, double *);
 SEXP bclm(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 void knear(int *, int *, double *, int *, double *, int *, int *);
 void getIKPrbs(int *, int *, int *, int *, int *, int *, int *, int *, double *, double *, int *, double *, double *, double *);
 void getCKPrbs(int *, int *, int *, int *, int *, int *, int *, int *, double *, double *, int *, double *, double *, double *);
-void KjointProbsMCS(double *, int *, double *, int *, int *, int *, int *, int *, double *, int *, double *);
 void cEmbFrq(double *, int *, int *, double *, double *);
 void pathAlg(int *, int *, int *, double *, double *, int *, double *, int *, int *, double *, double *, double *, int *);
 void getPos(double *, int *, int *, int *, int *, int *);
@@ -78,3 +76,7 @@ void wl(int *, int *, double *, double *, double *, int *);
 void wd(double *, int *, int *, int *);
 void nsph(int *, double *, double *);
 void nsph2(int *, double *, double *);
+
+/* mcs.h */
+void jointProbsMCS(double *, int *, double *, int *, int *, int *, int *, double *, double *, int*, double *);
+void KjointProbsMCS(double *, int *, double *, int *, int *, int *, int *, int *, double *, int *, double *);

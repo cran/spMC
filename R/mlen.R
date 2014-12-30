@@ -1,5 +1,5 @@
 mlen <-
-function(data, coords, loc.id, direction, mle = "trm") {
+function(data, coords, loc.id, direction, mle = "avg") {
   # Empirical estimation mean-lengths (for embeded data)
   #
   #      data vector of data or 
@@ -16,16 +16,16 @@ function(data, coords, loc.id, direction, mle = "trm") {
   }
   else {
     if (is.character(mle)) {
-      if (!mle %in% c("avg", "mlk", "trm", "mdn")) mle <- "trm"      
+      if (!mle %in% c("avg", "mlk", "trm", "mdn")) mle <- "avg"      
     }
     else {
-      mle <- "trm"
+      mle <- "avg"
     }
   }
   # Mean-Length Estimation via method of moments (averaging)
   if (mle == "avg") {
     gl <- getlen(data, coords, loc.id, direction, zero.allowed = TRUE)
-    meanlen <- tapply(gl$length, gl$categories, mean)
+    meanlen <- tapply(gl$length + gl$maxcens, gl$categories, mean)
   }
   # Mean-Length Estimation via maximum likelihood (log-normal distribution)
   if (mle == "mlk") {
@@ -54,8 +54,8 @@ function(data, coords, loc.id, direction, mle = "trm") {
   }
 # Mean-Length Estimation via trimmed median calculation
   if (mle == "mdn") {
-    gl <- getlen(data, coords, loc.id, direction, zero.allowed = FALSE)
-    meanlen <- tapply(gl$length, gl$categories, median)
+    gl <- getlen(data, coords, loc.id, direction, zero.allowed = TRUE)
+    meanlen <- tapply(gl$length + gl$maxcens, gl$categories, median)
   }
   iiff <- is.finite(meanlen)
   zzzz <- meanlen[iiff] <= 0

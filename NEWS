@@ -1,5 +1,23 @@
 spMC News
 
+CHANGES IN spMC 0.3.6
+
+  BUG FIXES:
+    o the example of the tpfit_me() function now provides consistent
+      results.
+
+CHANGES IN spMC 0.3.5
+
+  BUG FIXES:
+    o mlen() now returns more accurate results with "avg" method.
+
+    o "transCount" consider all directions between couple of points.
+
+    o the C code was fixed in order to be compatible with OpenMP 4.0.
+
+    o the deprecated which.lines() function is now replaced by 
+      which_lines() in all the examples of the manual.
+
 CHANGES IN spMC 0.3.4
 
   BUG FIXES:

@@ -7,6 +7,9 @@
 /* Inclusion of functions for empirical transiograms */
 #include "trans.h"
 
+/* Inclusion of functions for multinomial categorical simulation */
+#include "mcs.h"
+
 void cEmbedLen(int *n, int *nc, double *coords, int *locId, int *data, int *cemoc, double *maxcens, double *tlen) {
   /* Computing strata lengths (i.e. mean lengths)
           *n - sample size
@@ -1450,96 +1453,6 @@ void rotaH(int *nc, double *matdir, double *vet) {
   free(lag);
 }
 
-void jointProbsMCS(double *coords, int *hmany, double *grid, int *nrs, int *nc, int *nk, int *ndata, double *coefs, double *matdir, int *rota, double *pProbs) {
-  /* "Posterior" transition probabilities approximation (Multinomial Categorical Simulation)
-       *coords - matrix of data coordinates
-        *hmany - number of data coordinates
-         *grid - matrix of simulation coordinates
-          *nrs - number of simulation coordinates
-           *nc - sample space dimention
-           *nk - number of categories
-        *ndata - vector of neighbour categories
-        *coefs - matrices of coefficients
-       *matdir - rotation matrix
-         *rota - boolean (it's FALSE if matdir is identity)
-       *pProbs - matrix of probability vectors */
-
-  int i, j, k;
-  double mysum, mymax;
-  double *mycoef;
-
-  if ((mycoef = (double *) malloc(*nk * *nk * *nc * sizeof(double))) == NULL) {
-#if __VOPENMP
-    #pragma omp critical
-#endif
-    error("%s", myMemErr);
-  }
-
-#if __VOPENMP
-  #pragma omp parallel for default(shared) private(i) schedule(static, 1)
-#endif
-  for (i = 0; i < *nc; i++) {
-    revCoef(&coefs[*nk * *nk * i], pProbs, nk, &mycoef[*nk * *nk * i]);
-  }
-
-#if __VOPENMP
-  #pragma omp parallel shared(nc, nk, myMemErr)
-  {
-#endif
-    if ((h = (double *) malloc(*nc * sizeof(double))) == NULL) {
-#if __VOPENMP
-      #pragma omp critical
-#endif
-      error("%s", myMemErr);
-    }
-    if ((p = (double *) malloc(*nk * *nk * sizeof(double))) == NULL) {
-#if __VOPENMP
-      #pragma omp critical
-#endif
-      error("%s", myMemErr);
-    }
-#if __VOPENMP
-  }
-
-  #pragma omp parallel for default(shared) private(i, j, k, mysum, mymax) schedule(static, 1)
-#endif
-  for (i = 0; i < *nrs; i++) { // loop for grid
-    for (j = 0; j < *hmany; j++) { // loop for coords
-      for (k = 0; k < *nc; k++) {
-        h[k] = coords[*hmany * k + j] - grid[*nrs * k + i];
-      }
-      if (*rota) rotaH(nc, matdir, h);
-      predVET(coefs, mycoef, nk, nc, h, p);
-      if (!ISNAN(p[0])) {
-        pProbs[*nk * i] *= p[*nk * (ndata[j] - 1)];
-        mymax = pProbs[*nk * i];
-        for (k = 1; k < *nk; k++) {
-          pProbs[*nk * i + k] *= p[*nk * (ndata[j] - 1) + k];
-          if (mymax < pProbs[*nk * i + k]) mymax = pProbs[*nk * i + k];
-        }
-        if (mymax < 0.001) {
-         for (k = 0; k < *nk; k++) {
-            pProbs[*nk * i + k] *= 1000.0;
-          }
-        }
-      }
-    }
-    mysum = pProbs[*nk * i];
-    for (k = 1; k < *nk; k++) mysum += pProbs[*nk * i + k];
-    for (k = 0; k < *nk; k++) pProbs[*nk * i + k] /= mysum;
-  }
-#if __VOPENMP
-  #pragma omp parallel
-  {
-#endif
-    free(h);
-    free(p);
-#if __VOPENMP
-  }
-#endif
-  free(mycoef);
-}
-
 void rotaxes(int *nc, double *ang, double *res) {
   int i, j;
   double *rotmat;
@@ -1671,7 +1584,7 @@ void knear(int *nc, int *nr, double *coords, int *nrs, double *grid, int *knn, i
 
   int i, j, k;
   double dst;
-  
+
 #if __VOPENMP
   #pragma omp parallel shared(knn, myMemErr)
   {
@@ -1690,7 +1603,7 @@ void knear(int *nc, int *nr, double *coords, int *nrs, double *grid, int *knn, i
     }
 #if __VOPENMP
   }
-  
+
   #pragma omp parallel for default(shared) private(i, j, k, dst) schedule(static, 1)
 #endif
   for (i = 0; i < *nrs; i++) {
@@ -2353,96 +2266,6 @@ void getCKPrbs(int *ordinary, int *indices, int *groups, int *knn, int *nc, int 
 #endif
 }
 
-void KjointProbsMCS(double *coords, int *hmany, double *grid, int *nrs, int *nc, int *nk, int *ndata, int *knn, double *coefs, int *indices, double *pProbs) {
-  /* "Posterior" transition probabilities approximation with k-nearest neighbours
-        *coords - matrix of data coordinates            (Multinomial Categorical Simulation)
-         *hmany - number of data coordinates
-          *grid - matrix of simulation coordinates
-           *nrs - number of simulation coordinates
-            *nc - sample space dimention
-            *nk - number of categories
-         *ndata - vector of observed categories
-           *knn - number of k-nearest neighbours
-       *indices - matrix of indices
-         *coefs - matrices of coefficients
-        *pProbs - matrix of probability vectors */
-
-  int i, j, k;
-  double mysum, mymax;
-  double *mycoef;
-
-  if ((mycoef = (double *) malloc(*nk * *nk * *nc * sizeof(double))) == NULL) {
-#if __VOPENMP
-    #pragma omp critical
-#endif
-    error("%s", myMemErr);
-  }
-
-#if __VOPENMP
-  #pragma omp parallel for default(shared) private(i) schedule(static, 1)
-#endif
-  for (i = 0; i < *nc; i++) {
-    revCoef(&coefs[*nk * *nk * i], pProbs, nk, &mycoef[*nk * *nk * i]);
-  }
-
-#if __VOPENMP
-  #pragma omp parallel shared(nc, myMemErr)
-  {
-#endif
-    if ((h = (double *) malloc(*nc * sizeof(double))) == NULL) {
-#if __VOPENMP
-      #pragma omp critical
-#endif
-      error("%s", myMemErr);
-    }
-    if ((p = (double *) malloc(*nk * *nk * sizeof(double))) == NULL) {
-#if __VOPENMP
-      #pragma omp critical
-#endif
-      error("%s", myMemErr);
-    }
-#if __VOPENMP
-  }
-
-  #pragma omp parallel for default(shared) private(i, j, k, mysum, mymax) schedule(static, 1)
-#endif
-  for (i = 0; i < *nrs; i++) { // loop for grid
-    for (j = 0; j < *knn; j++) { // loop for coords
-      for (k = 0; k < *nc; k++) {
-        h[k] = coords[*hmany * k + indices[*knn * i + j]] - grid[*nrs * k + i];
-      }
-      predVET(coefs, mycoef, nk, nc, h, p);
-      if (!ISNAN(p[0])) {
-        pProbs[*nk * i] *= p[*nk * (ndata[j] - 1)];
-        mymax = pProbs[*nk * i];
-        for (k = 1; k < *nk; k++) {
-          pProbs[*nk * i + k] *= p[*nk * (ndata[j] - 1) + k];
-          if (mymax < pProbs[*nk * i + k]) mymax = pProbs[*nk * i + k];
-        }
-        if (mymax < 0.001) {
-          for (k = 0; k < *nk; k++) {
-            pProbs[*nk * i + k] *= 1000.0;
-          }
-        }
-      }
-    }
-    mysum = pProbs[*nk * i];
-    for (k = 1; k < *nk; k++) mysum += pProbs[*nk * i + k];
-    for (k = 0; k < *nk; k++) pProbs[*nk * i + k] /= mysum;
-  }
-
-#if __VOPENMP
-  #pragma omp parallel
-  {
-#endif
-    free(h);
-    free(p);
-#if __VOPENMP
-  }
-#endif
-  free(mycoef);
-}
-
 void cEmbFrq(double *s, int *nk, int *mt, double *eps, double *f) {
   /* Maximum Entropy estiamtion of Embedded Frequencies
          *s - vector of proportions divied by the mean lenghts
@@ -2820,20 +2643,22 @@ void getPos(double *nbLength, int *which, int *np, int *nlen, int *nc, int *pos)
     idx[i] = i;
   }
   rsort_with_index(nbLength, idx, *nlen);
+  cnp = (1 << *nc);
 #if __VOPENMP
   #pragma omp parallel for default(shared) private(i, j) schedule(static, 1)
 #endif
-  for (i = 0; i < (1 << *nc); i++) {
+  for (i = 0; i < cnp; i++) {
     for (j = 0; j < *nlen; j++) {
       if (i == which[idx[j]]) break;
     }
     pos[i] = (j < *nlen) ? idx[j] : -1;
   }
+  j = cnp;
   cnp = 0;
 #if __VOPENMP
   #pragma omp parallel for default(shared) private(i) schedule(static, 1) reduction(+ : cnp)
 #endif
-  for (i = 0; i < (1 << *nc); i++) {
+  for (i = 0; i < j; i++) {
     if (pos[i] >= 0) cnp = cnp + 1;
   }
   *np = cnp;

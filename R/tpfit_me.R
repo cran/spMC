@@ -1,5 +1,5 @@
 tpfit_me <-
-function(data, coords, direction, tolerance = pi/8, max.it = 9000, mle = "trm") {
+function(data, coords, direction, tolerance = pi/8, max.it = 9000, mle = "avg") {
   # Estimation for matrix of transition rates 
   #    ( Maximum Entropy Method )
   #
@@ -21,7 +21,7 @@ function(data, coords, direction, tolerance = pi/8, max.it = 9000, mle = "trm") 
 
   proportion <- table(data)
   proportion <- proportion / sum(proportion)
-  
+
   loc.id <- which_lines(coords, direction, tolerance)
   ml <- mlen(data, coords, loc.id, direction, mle)
 
@@ -43,7 +43,8 @@ function(data, coords, direction, tolerance = pi/8, max.it = 9000, mle = "trm") 
   colnames(res$coefficients) <- names(res$prop)
   rownames(res$coefficients) <- names(res$prop)
   res$tolerance <- as.double(tolerance)
-  
+
   class(res) <- "tpfit"
   return(res)
 }
+

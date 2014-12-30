@@ -7,7 +7,13 @@ function(x, ...) {
   last <- rev(lvl)[1]
   for (i in lvl) {  
     cat("Stratum lengths of category \"", i, "\"\n", sep = "")
-    print(x$length[i == x$categories], ...)
+    if (x$zeros) {
+      idx <- (i == x$categories)
+      print(x$length[idx] + x$maxcens[idx], ...)
+    }
+    else {
+      print(x$length[i == x$categories], ...)
+    }
     if (i != last) cat("\n")
   }
   invisible(x)

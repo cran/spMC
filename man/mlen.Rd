@@ -6,7 +6,7 @@
 
 \description{The function estimates the mean length for a \eqn{d}{d}-D spatial embedded Markov chain for a specified direction \eqn{\phi}{phi}.}
 
-\usage{mlen(data, coords, loc.id, direction, mle = "trm")}
+\usage{mlen(data, coords, loc.id, direction, mle = "avg")}
 
 \arguments{
 %%        data vector of data

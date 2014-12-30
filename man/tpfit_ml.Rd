@@ -8,7 +8,7 @@
 The function estimates the model parameters of a 1-D continuous lag spatial Markov chain by the use of the mean length method. Transition rates matrix along a user defined direction and proportions of categories are computed.
 }
 
-\usage{tpfit_ml(data, coords, direction, tolerance = pi/8, mle = "trm")}
+\usage{tpfit_ml(data, coords, direction, tolerance = pi/8, mle = "avg")}
 
 \arguments{
 %%         data vector of data
@@ -20,7 +20,7 @@ The function estimates the model parameters of a 1-D continuous lag spatial Mark
   \item{coords}{an \eqn{n \times d}{n x d} matrix where each row denotes the \eqn{d}{d}-D coordinates of data locations.}
   \item{direction}{a \eqn{d}{d}-D numerical vector (or versor) which represents the chosen direction.}
   \item{tolerance}{a numerical value for the tolerance angle (in radians). It's \code{pi/8} by default.}
-  \item{mle}{a character value to pass to the function \code{\link{mlen}}. It is \code{"trm"} by default.}
+  \item{mle}{a character value to pass to the function \code{\link{mlen}}. It is \code{"avg"} by default.}
 }
 
 \details{
