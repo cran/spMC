@@ -31,15 +31,16 @@ function(x, data, coords, grid, knn = NULL) {
   nrs <- dim(grid)[1] #total number of simulation
 
   data <- as.integer(data)
-  prhat <- matrix(x$prop, nk, nrs)
   dire.mat <- diag(, nc)
   if (!is.null(x$rotation)) {
     dire.mat <- .C('rotaxes', nc = as.integer(nc), ang = as.double(x$rotation),
                    res = as.double(dire.mat), PACKAGE = "spMC")$res
     dire.mat <- matrix(dire.mat, nc, nc)
   }
+  knn <- NULL
   if (is.null(knn)) {
     path <- 1:nrs
+    prhat <- matrix(x$prop, nk, nrs)
     # APPROXIMATING PROBABILITIES WITH ALL DATA #
     prhat <- .C('jointProbsMCS', coords = as.double(coords), hmany = as.integer(hmany),
                 grid = as.double(grid), nrs = as.integer(nrs), nc = as.integer(nc),
@@ -49,6 +50,7 @@ function(x, data, coords, grid, knn = NULL) {
                 PACKAGE = "spMC")$pProbs
   }
   else {
+    prhat <- matrix(1, nk, nrs)
     new.coords <- coords
     new.grid <- grid
     if (!is.null(x$rotation)) {
@@ -68,6 +70,7 @@ function(x, data, coords, grid, knn = NULL) {
                          grid = as.double(new.grid), knn = as.integer(knn),
                          indices = as.integer(indices), PACKAGE = "spMC")$indices,
                       nrow = knn, ncol = nrs)
+#    indices <- replicate(nrs, sample.int(nr.orig, knn)) - 1L
     # SORTING SIMULATION GRID #
     path <- do.call("order", as.data.frame(t(indices)))
     indices <- indices[, path]
@@ -98,6 +101,7 @@ function(x, data, coords, grid, knn = NULL) {
   names(res) <- c(colnames(coords), "Simulation", "Prediction", levelLab)
   res[path, ] <- res
   attr(res, "type") <- "Multinomial Categorical Simulation"
+  attr(res, "packageVersion") <- paste(packageVersion("spMC"))
   class(res) <- c("data.frame", "spsim")
   return(res)
 }

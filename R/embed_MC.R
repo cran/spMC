@@ -23,6 +23,7 @@ function(data, coords, loc.id, direction) {
   ord <- order(abs(direction), decreasing = TRUE)
   ord <- cbind(loc.id, coords[, ord])
   ord <- lapply(apply(ord, 2, list), unlist)
+  ord$decreasing <- TRUE
   ord <- do.call("order", ord)
   data <- data[ord]
   loc.id <- loc.id[ord]
@@ -31,12 +32,16 @@ function(data, coords, loc.id, direction) {
   tcount <- .C('cEmbedTrans', n = as.integer(n), nk = as.integer(nk), 
                locId = as.integer(loc.id), data = as.integer(data), 
                tcount = as.integer(tcount), PACKAGE = "spMC")$tcount
-  storage.mode(tcount) <- "double"
-  tcount <- .C('embedTProbs', nk = as.integer(nk), tp = as.double(tcount), 
+  tprobs <- as.double(tcount)
+  tprobs <- .C('embedTProbs', nk = as.integer(nk), tp = as.double(tprobs), 
                PACKAGE = "spMC")$tp
   tcount <- matrix(tcount, ncol = nk)
+  tprobs <- matrix(tprobs, ncol = nk)
   diag(tcount) <- NA
+  diag(tprobs) <- NA
   colnames(tcount) <- rownames(tcount) <- labels
-  return(tcount)
+  colnames(tprobs) <- rownames(tprobs) <- labels
+  attr(tprobs, "Counts") <- tcount
+  return(tprobs)
 }
 

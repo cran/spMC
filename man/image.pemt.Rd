@@ -9,7 +9,7 @@ The function plots \eqn{2}{2}-D sections of a multidirectional transiogram compu
 
 \usage{
 \method{image}{pemt}(x, main, mar, ask = TRUE, ..., 
-      nlevels = 10, contour = FALSE)
+      nlevels = 10, contour = TRUE)
 }
 
 \arguments{
@@ -26,7 +26,7 @@ The function plots \eqn{2}{2}-D sections of a multidirectional transiogram compu
   \item{ask}{a logical value; if \code{TRUE}, the user is asked for input, before each plot. See \code{\link{par}}(ask=.).}
   \item{\dots}{other arguments to pass to the function \code{\link{image}}.}
   \item{nlevels}{the number of levels to pass to the function \code{\link{contour}}.}
-  \item{contour}{logical. If \code{TRUE}, the function \code{\link{contour}} is used to draw contour lines of the theoretical multidimensional transiogram over images. This permits to compare the model probabilities with the pseudo-empirical ones. Defaults to \code{FALSE}.}
+  \item{contour}{logical. If \code{TRUE}, the function \code{\link{contour}} is used to draw contour lines over images. Defaults to \code{TRUE}.}
 }
 
 \details{
@@ -62,7 +62,8 @@ psEmpTr <- pemt(ACM$MAT3, ACM[, 1:3], 2,
 # Plot 2-D sections of
 # a multi-directional transiogram
 image(psEmpTr, col = rev(heat.colors(500)), 
-      breaks = 0:500 / 500, mar = .7)
+      breaks = 0:500 / 500, mar = .7,
+      contour = FALSE)
 }}
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

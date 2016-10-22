@@ -20,8 +20,8 @@ The main goal of this package is to provide a set of functions for
 \tabular{ll}{
 Package: \tab spMC\cr
 Type: \tab Package\cr
-Version: \tab 0.3.6\cr
-Date: \tab 2014-12-30\cr
+Version: \tab 0.3.8\cr
+Date: \tab 2016-10-20\cr
 License: \tab GPL (>= 2)\cr
 LazyLoad: \tab yes\cr
 }
@@ -59,6 +59,8 @@ Li, W. (2007) Transiograms for Characterizing Spatial Variability of Soil Classe
 Pickard, D. K. (1980) Unilateral Markov Fields. \emph{Advances in Applied Probability}, \bold{12}(3), 655-671.
 
 Sartore, L. (2010) Geostatistical models for 3-D data. M.Phil. thesis, Ca' Foscari University of Venice.
+
+Sartore, L., Fabbri, P. and Gaetan, C. (2016). spMC: an R-package for 3D lithological reconstructions based on spatial Markov chains. \emph{Computers & Geosciences}, \bold{94}(September), 40-47.
 
 %Tolosana-Delgado, R., Pawlowsky-Glahn, V., Egozcue, J.J. (2008) Indicator Kriging without Order Relation Violations. \emph{Mathematical Geosciences}, \bold{40}(3), 327-347.
 

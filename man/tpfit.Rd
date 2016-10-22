@@ -29,7 +29,7 @@ The function estimates the model parameters of a 1-D continuous lag spatial Mark
   \item{data}{a categorical data vector of length \eqn{n}{n}.}
   \item{coords}{an \eqn{n \times d}{n x d} matrix where each row denotes the \eqn{d}{d}-D coordinates of data locations.}
   \item{direction}{a \eqn{d}{d}-D numerical vector (or versor) which represents the chosen direction.}
-  \item{method}{a character object specifying the method to estimata the transition rates. Possible choises are \code{"ml"} (by default) for the mean length method, \code{"ils"} for the iterated least squares and \code{"me"} for the maximum entropy method.}
+  \item{method}{a character object specifying the method to estimate the transition rates. Possible choises are \code{"ml"} (by default) for the mean length method, \code{"ils"} for the iterated least squares and \code{"me"} for the maximum entropy method.}
   \item{tolerance}{a numerical value for the tolerance angle (in radians). It's \code{pi/8} by default.}
   \item{max.it}{a numerical value which denotes the maximum number of iterations to perform during the optimization phase. It is \code{9000} by default and used only when the method is \code{"me"}.}
   \item{mle}{a character value to pass to the function \code{\link{mlen}}. It is \code{"avg"} by default and not use when the method is \code{"ils"}.}

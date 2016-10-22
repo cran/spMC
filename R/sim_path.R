@@ -84,9 +84,10 @@ function(x, data, coords, grid, radius, fixed=FALSE) {
   rownames(simu) <- NULL
   rownames(prhat) <- NULL
   res <- data.frame(grid, simu, pred, prhat)
-  names(res) <- c(colnames(coords), "Simulation", "Prediction", levelLab)
+  names(res) <- c(x$coordsnames, "Simulation", "Prediction", levelLab)
   tipo <- if (fixed) {"Fixed"} else {"Random"}
   attr(res, "type") <- paste(tipo, "Path Simulation")
+  attr(res, "packageVersion") <- paste(packageVersion("spMC"))
   class(res) <- c("data.frame", "spsim")
   return(res)
 }

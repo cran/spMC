@@ -13,10 +13,10 @@ void jointProbsMCS(double *coords, int *hmany, double *grid, int *nrs, int *nc, 
        *pProbs - matrix of probability vectors */
 
   int i, j, k;
-  double mysum, mymax, myexp;
+  double mysum, mymax;//, myexp;
   double *mycoef;
 
-  myexp = 1.0 / (double) *hmany;
+//   myexp = 1.0 / (double) *hmany;
 
   if ((mycoef = (double *) malloc(*nk * *nk * *nc * sizeof(double))) == NULL) {
 #if __VOPENMP
@@ -61,10 +61,12 @@ void jointProbsMCS(double *coords, int *hmany, double *grid, int *nrs, int *nc, 
       if (*rota) rotaH(nc, matdir, h);
       predVET(coefs, mycoef, nk, nc, h, p); // calculate transition probabilities
       if (!ISNAN(p[0])) {
-        pProbs[*nk * i] *= pow(p[*nk * (ndata[j] - 1)], myexp);
+        pProbs[*nk * i] *= p[*nk * (ndata[j] - 1)];
+//         pProbs[*nk * i] *= pow(p[*nk * (ndata[j] - 1)], myexp);
         mymax = pProbs[*nk * i]; // control statistic for computational stability. It avoids problems due to the C.L.T.
         for (k = 1; k < *nk; k++) {
-          pProbs[*nk * i + k] *= pow(p[*nk * (ndata[j] - 1) + k], myexp);
+          pProbs[*nk * i + k] *= p[*nk * (ndata[j] - 1) + k];
+//           pProbs[*nk * i + k] *= pow(p[*nk * (ndata[j] - 1) + k], myexp);
           if (mymax < pProbs[*nk * i + k]) mymax = pProbs[*nk * i + k];
         }
         if (mymax < 0.001) {
@@ -148,13 +150,16 @@ void KjointProbsMCS(double *coords, int *hmany, double *grid, int *nrs, int *nc,
   for (i = 0; i < *nrs; i++) { // loop for grid
     for (j = 0; j < *knn; j++) { // loop for coords
       for (k = 0; k < *nc; k++) {
-        h[k] = coords[*hmany * k + indices[*knn * i + j]] - grid[*nrs * k + i];
+        h[k] = grid[*nrs * k + i] - coords[*hmany * k + indices[*knn * i + j]];
+//         h[k] = coords[*hmany * k + indices[*knn * i + j]] - grid[*nrs * k + i];
       }
       predVET(coefs, mycoef, nk, nc, h, p);
       if (!ISNAN(p[0])) {
+//         pProbs[*nk * i] *= p[*nk * (ndata[j] - 1)];
         pProbs[*nk * i] *= pow(p[*nk * (ndata[j] - 1)], myexp);
         mymax = pProbs[*nk * i];
         for (k = 1; k < *nk; k++) {
+//           pProbs[*nk * i + k] *= p[*nk * (ndata[j] - 1) + k];
           pProbs[*nk * i + k] *= pow(p[*nk * (ndata[j] - 1) + k], myexp);
           if (mymax < pProbs[*nk * i + k]) mymax = pProbs[*nk * i + k];
         }

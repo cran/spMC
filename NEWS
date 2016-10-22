@@ -1,5 +1,22 @@
 spMC News
 
+CHANGES IN spMC 0.3.8
+
+  BUG FIXES:
+    o sim_mcs() returns more accurate probabilities, and reliable
+      predictions.
+
+    o embed_MC() returns the transition probabilities that are now
+      consistent with the tpfit() estimation methodology. An 
+      additional attribute is added to deal with the counts.
+
+CHANGES IN spMC 0.3.7
+
+  BUG FIXES:
+    o the argument "contour" in image.pemt() is now TRUE by default,
+      and the contour plots are drawn according the rappresented
+      probabilities.
+
 CHANGES IN spMC 0.3.6
 
   BUG FIXES:

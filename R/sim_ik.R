@@ -93,6 +93,7 @@ function(x, data, coords, grid, knn = 12, ordinary = TRUE) {
   res[path, ] <- res
   attr(res, "type") <- paste(ifelse(ordinary, "Ordinary", "Simple"), 
                              "Indicator Kriging Simulation")
+  attr(res, "packageVersion") <- paste(packageVersion("spMC"))
   class(res) <- c("data.frame", "spsim")
   return(res)
 }

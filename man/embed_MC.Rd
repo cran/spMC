@@ -27,7 +27,7 @@ The resulting matrix is given by normalizing a transition count matrix, which do
 It's also possible to calculate the transition probabilities matrix for several directions in a \eqn{d}{d}-D space through arguments \code{direction} and \code{loc.id}. If the user has no previous knowledge about \code{loc.id}, the function \code{\link{which_lines}} provides a method to compute the right values.
 }
 
-\value{A \eqn{K \times K}{K x K} matrix, where \eqn{K}{K} denotes the number of observed categories.}
+\value{A \eqn{K \times K}{K x K} transition probability matrix, where \eqn{K}{K} denotes the number of observed categories. Another \eqn{K \times K}{K x K} matrix with the counts of transitions is attached as an attribute.}
 
 \references{Carle, S. F., Fogg, G. E. (1997) Modelling Spatial Variability with One and Multidimensional Continuous-Lag Markov Chains. \emph{Mathematical Geology}, \bold{29}(7), 891-918.
 

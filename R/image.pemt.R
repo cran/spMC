@@ -1,5 +1,5 @@
 image.pemt <-
-function(x, main, mar, ask = TRUE, ..., nlevels = 10, contour = FALSE) {
+function(x, main, mar, ask = TRUE, ..., nlevels = 10, contour = TRUE) {
   # Plot transition probabilities matrices 2D
   # through no ellispoidal interpolation
   #
@@ -74,8 +74,8 @@ function(x, main, mar, ask = TRUE, ..., nlevels = 10, contour = FALSE) {
         else {
           if (contour) {
             contour(x[[i]]$X, x[[i]]$Y,
-                    t(matrix(rev(x[[i]]$Tprobs$Tmat[j, k, ]), mpoints, mpoints)),
-                    nlevels, add = TRUE)
+                    t(matrix(rev(x[[i]]$Eprobs[j, k, ]), mpoints, mpoints)),
+                    nlevels, add = TRUE) #x[[i]]$Tprobs$Tmat[j, k, ]
           }
         }
       }
