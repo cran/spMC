@@ -33,7 +33,7 @@ citEntry(
  number="C",
  pages="40--47",
  year="2016",
- author="Sartore, Luca and Fabbri, Paolo and Gaetan, Carlo",
+ author="Luca Sartore and Paolo Fabbri and Carlo Gaetan",
  doi="10.1016/j.cageo.2016.06.001",
  textVersion="Sartore, L., Fabbri, P., & Gaetan, C. (2016) spMC: an R-package 
    for 3D lithological reconstructions based on spatial Markov chains.
@@ -49,7 +49,7 @@ citEntry(
  pages="16--28",
  year="2013",
  month="December",
- author="Sartore, Luca",
+ author="Luca Sartore",
  issn="2073-4859",
  textVersion="Sartore, L. (2013) spMC: Modelling Spatial Random Fields 
    with Continuous Lag Markov Chains. The R Journal. 5/2:16-28."

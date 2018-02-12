@@ -1,5 +1,14 @@
 spMC News
 
+CHANGES IN spMC 0.3.9
+
+  BUG FIXES:
+    o the order of the macros $(LAPACK_LIBS) and $(BLAS_LIBS) was 
+      switched to be conformed with the new CRAN guidelines.
+
+    o bibentry author fields in the inst/CITATION file are now
+      following the standard "Given_1 Family_1 and Given_2 Family_2".
+
 CHANGES IN spMC 0.3.8
 
   BUG FIXES:

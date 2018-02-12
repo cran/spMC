@@ -1,7 +1,7 @@
 eb723b61539feef013de476e68b5c50a *COPYING
-c3a5c0cdb02896e78cfa8b87a323f84f *DESCRIPTION
-0773ec91074f72c11cf0ed24505bf5ca *NAMESPACE
-56165eece4dc2cdfabbc3378588d4761 *NEWS
+de3c08df614740489ca073ece6c39fb5 *DESCRIPTION
+025f71ccc055572fe1c213af83a6dc28 *NAMESPACE
+94d0d389988c3dcf19785e10d8c0a42c *NEWS
 d603d525631fb0865a7ab334d96c1c0f *R/boxplot.lengths.R
 9e4f748444fccbda8da0c8b1a16a47c0 *R/contour.pemt.R
 30e09c5aa0ad4fd90aab0c7897bc100a *R/density.lengths.R
@@ -55,7 +55,7 @@ c53c046db95728558db41f700a2c3b44 *R/tpfit_ml.R
 b3177146addd83727b0838935243051e *R/zzz.R
 029ff19917b82939c8bfc796f4cb6f82 *cleanup
 f706907a932812aa837934644b0d7d10 *data/ACM.rda
-a201865404443b843db7719af63d90ee *inst/CITATION
+d3579b8a35cfb1d8b3283647279e0be3 *inst/CITATION
 289910903bb5ddd5bc5f95607d5ded09 *man/ACM.Rd
 bf7a060b16ccea1b88c507f77fe4c076 *man/boxplot.lengths.Rd
 06786d3ad5d9177e4bb34c3c45b110df *man/contour.pemt.Rd
@@ -100,7 +100,7 @@ b7ea4721dfce9740b2411f69821f8165 *man/sim_ck.Rd
 306c865d0bbe2285bf6879ca3c14741f *man/sim_ik.Rd
 14036f2a099f1646a9f1a79798530f87 *man/sim_mcs.Rd
 e531bb6f0539d522d48e609da891872f *man/sim_path.Rd
-fd558b55e8097b960fa2dbdb47100c07 *man/spMC-package.Rd
+82adbf91c10087442abb85256dc816e6 *man/spMC-package.Rd
 ad980a9d6b22c2c0838cab92e0dd541a *man/summary.lengths.Rd
 1df04e4bf2b7ce77f24a1055c863a2cd *man/tpfit.Rd
 122ed17661148a70da4e78be743fc758 *man/tpfit_ils.Rd
@@ -108,10 +108,10 @@ ad980a9d6b22c2c0838cab92e0dd541a *man/summary.lengths.Rd
 b4fc9b791ba78fc9c90c94a9a1aaa7bd *man/tpfit_ml.Rd
 777de158bbbce31ad6b7d72bbad17141 *man/transiogram.Rd
 e44ba0f7e82cd74fd5e927e16a1fe877 *man/which_lines.Rd
-616ba2712df1963d3c9b7e7adbce3715 *src/Makevars
+82ce95302a6c99cf06c0eda4c0f9b7d3 *src/Makevars
 04c184cdc29e2ad24d0c5e8d9e93fbc0 *src/mcs.h
 3b7f6ceb7a749514deeeba752830c7a5 *src/spMC.c
-215cb80e17b862eb29e4908dd90be344 *src/spMC.h
+451b6152ae6dc2ef85cd1bbbd5bc50c2 *src/spMC.h
 5aeccb090554ceb52dcd398d4a6f8755 *src/trans.h
 876a1cfebbd15991330e9e28c8ef8769 *src/wfun.h
 69c0d03f02adb05ed601b1dbc30eb4f3 *tests/spMC-Ex.R

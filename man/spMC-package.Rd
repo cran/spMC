@@ -20,8 +20,8 @@ The main goal of this package is to provide a set of functions for
 \tabular{ll}{
 Package: \tab spMC\cr
 Type: \tab Package\cr
-Version: \tab 0.3.8\cr
-Date: \tab 2016-10-20\cr
+Version: \tab 0.3.9\cr
+Date: \tab 2018-02-09\cr
 License: \tab GPL (>= 2)\cr
 LazyLoad: \tab yes\cr
 }

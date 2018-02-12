@@ -12,6 +12,7 @@
 #include <R.h>
 #include <Rmath.h>
 #include <Rinternals.h>
+#include <R_ext/Rdynload.h>
 #include <R_ext/Lapack.h>
 #include <R_ext/Boolean.h>
 
@@ -22,6 +23,13 @@ char myMemErr[] = "There is not enough empty memory";
 #if __VOPENMP
   #pragma omp threadprivate(wo, pv, h, p, TtLag, tmpMat)
 #endif
+
+void
+R_init_spMC(DllInfo *info)
+{
+  R_registerRoutines(info, NULL, NULL, NULL, NULL);
+  R_useDynamicSymbols(info, TRUE);
+}
 
 /* spMC.c */
 void cEmbedLen(int *, int *, double *, int *, int *, int *, double *, double *);
