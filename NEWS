@@ -1,5 +1,11 @@
 spMC News
 
+CHANGES IN spMC 0.3.10
+
+  BUG FIXES:
+    o a more consistent use of PROTECT has been implemented for the
+      function `bclm` in the file `spMC.c` (line 1552).
+
 CHANGES IN spMC 0.3.9
 
   BUG FIXES:

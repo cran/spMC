@@ -1522,7 +1522,7 @@ SEXP bclm(SEXP q, SEXP eps, SEXP res, SEXP echo, SEXP expr, SEXP Rnv) {
        expr - function to optimize
         Rnv - R enviroment */
 
-  SEXP resOLD, r, ans;
+  SEXP resOLD, r, ans, evax;
   int i = 1, j, n;
   double mxdst, tmp;
   double *dres, *dold, *dr, *dans;
@@ -1549,7 +1549,8 @@ SEXP bclm(SEXP q, SEXP eps, SEXP res, SEXP echo, SEXP expr, SEXP Rnv) {
     if (LOGICAL(echo)[0]) Rprintf("Iteration %d\n", i);
     defineVar(install("rho"), r, Rnv);
     defineVar(install("res"), res, Rnv);
-    PROTECT(ans = coerceVector(eval(expr, Rnv), REALSXP));
+    PROTECT(evax = eval(expr, Rnv));
+    PROTECT(ans = coerceVector(evax, REALSXP));
     dans = REAL(ans);
     mxdst = 0.0;
     for (j = 0; j < n; j++) {
@@ -1562,7 +1563,7 @@ SEXP bclm(SEXP q, SEXP eps, SEXP res, SEXP echo, SEXP expr, SEXP Rnv) {
     for (j = 0; j < n; j++) {
       dres[j] = dans[j];
     }
-    UNPROTECT(1);
+    UNPROTECT(2);
     if (mxdst < REAL(eps)[0]) break;
     ++i;
     if (dr[0] <= 0.0) dr[0] = 0.1;

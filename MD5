@@ -1,7 +1,7 @@
 eb723b61539feef013de476e68b5c50a *COPYING
-de3c08df614740489ca073ece6c39fb5 *DESCRIPTION
+d11580d628b36b410a9a78f910894557 *DESCRIPTION
 025f71ccc055572fe1c213af83a6dc28 *NAMESPACE
-94d0d389988c3dcf19785e10d8c0a42c *NEWS
+195aba9b033a50d9be396c023a118763 *NEWS
 d603d525631fb0865a7ab334d96c1c0f *R/boxplot.lengths.R
 9e4f748444fccbda8da0c8b1a16a47c0 *R/contour.pemt.R
 30e09c5aa0ad4fd90aab0c7897bc100a *R/density.lengths.R
@@ -100,7 +100,7 @@ b7ea4721dfce9740b2411f69821f8165 *man/sim_ck.Rd
 306c865d0bbe2285bf6879ca3c14741f *man/sim_ik.Rd
 14036f2a099f1646a9f1a79798530f87 *man/sim_mcs.Rd
 e531bb6f0539d522d48e609da891872f *man/sim_path.Rd
-82adbf91c10087442abb85256dc816e6 *man/spMC-package.Rd
+25b94025d0339823b9d0c14622dd96ba *man/spMC-package.Rd
 ad980a9d6b22c2c0838cab92e0dd541a *man/summary.lengths.Rd
 1df04e4bf2b7ce77f24a1055c863a2cd *man/tpfit.Rd
 122ed17661148a70da4e78be743fc758 *man/tpfit_ils.Rd
@@ -110,7 +110,7 @@ b4fc9b791ba78fc9c90c94a9a1aaa7bd *man/tpfit_ml.Rd
 e44ba0f7e82cd74fd5e927e16a1fe877 *man/which_lines.Rd
 82ce95302a6c99cf06c0eda4c0f9b7d3 *src/Makevars
 04c184cdc29e2ad24d0c5e8d9e93fbc0 *src/mcs.h
-3b7f6ceb7a749514deeeba752830c7a5 *src/spMC.c
+3ac95b7808f288922e09082efdd7ce15 *src/spMC.c
 451b6152ae6dc2ef85cd1bbbd5bc50c2 *src/spMC.h
 5aeccb090554ceb52dcd398d4a6f8755 *src/trans.h
 876a1cfebbd15991330e9e28c8ef8769 *src/wfun.h
