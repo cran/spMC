@@ -1,5 +1,26 @@
 spMC News
 
+CHANGES IN spMC 0.3.11
+
+  NEW FEATURES:
+    o the logical argument `entropy` is introduced in the function
+      sim(), sim_ck(), sim_ik(), sim_mcs() and sim_path(). Entropy
+      and standardized entropy are introduced to study the 
+      uncertainty of the predicted values.
+
+    o the package logo man/figures/logo.svg was included.
+    
+    o it was added a README.md file.
+    
+    o the files man/spMC-package.Rd, man/setCores.Rd, man/quench.Rd,
+      man/sim.Rd, man/sim_ck.Rd, and man/sim_ik.Rd have been updated.
+    
+    o it was removed a reference in inst/CITATION.
+
+  BUG FIXES:
+    o fixed a minor bug in the function `embedTProbs` of the file
+      `spMC.c` to avoid possible divisions by zeros.
+
 CHANGES IN spMC 0.3.10
 
   BUG FIXES:

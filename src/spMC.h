@@ -69,6 +69,7 @@ void getPos(double *, int *, int *, int *, int *, int *);
 void nearDire(int *, int *, double *, int *);
 void objfun(int *, int *, int *, int *, double *, double *, double *, double *);
 void fastobjfun(int *, int *, int *, int *, int *, int *, int *, double *, double *, double *, int *, double *, double *);
+void entropy(int *, double *, double *);
 
 /* trans.h */
 void transCount(int *, int *, int *, double *, double *, double *, int *, double *, int *, double *);

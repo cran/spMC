@@ -1,13 +1,14 @@
 "sim" <- 
-function(x, data, coords, grid, method = "ik", ...) {
+function(x, data, coords, grid, method = "ik", ..., entropy = FALSE) {
   # Generation of conditional simulation based on user specified method
   #
-  #        x a multi.tpfit object
-  #     data vector of data
-  #   coords coordinates matrix
-  #     grid simulation points
-  #   method method to perform prediction and simulation c("ik", "ck", "path", "mcs")
-  #      ... further option to pass to the function sim_*
+  #         x a multi.tpfit object
+  #      data vector of data
+  #    coords coordinates matrix
+  #      grid simulation points
+  #    method method to perform prediction and simulation c("ik", "ck", "path", "mcs")
+  #       ... further option to pass to the function sim_*
+  #   entropy logical value to compute uncertainties
 
   # Further arguments for Indicator Kriging (ik) and coKriging (ck)
   #      knn number of k-nearest neighbours
@@ -28,5 +29,5 @@ function(x, data, coords, grid, method = "ik", ...) {
   if (method == "path") return(sim_path(x, data, coords, grid, ...))
   if (method == "mcs") return(sim_mcs(x, data, coords, grid, ...))
   if (method != "ik") warning("Simulation method not recognized. Indicator Kriging method (\"ik\") set by default.")
-  return(sim_ik(x, data, coords, grid, ...))
+  return(sim_ik(x, data, coords, grid, ..., entropy = entropy))
 }

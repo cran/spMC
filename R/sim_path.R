@@ -1,13 +1,15 @@
 sim_path <-
-function(x, data, coords, grid, radius, fixed=FALSE) {
+function(x, data, coords, grid, radius, fixed=FALSE, entropy = FALSE) {
   # Generation of conditional simulation based on path
   #
-  #      x a multi_tpfit object
-  #   data vector of data
-  # coords coordinates matrix
-  #   grid simulation points
-  # radius radius to find neighbour points
-  #  fixed boolean for random or fixed path algorithm
+  #       x a multi_tpfit object
+  #    data vector of data
+  #  coords coordinates matrix
+  #    grid simulation points
+  #  radius radius to find neighbour points
+  #   fixed boolean for random or fixed path algorithm
+  # entropy logical value to compute uncertainties
+
 
   if(!is.multi_tpfit(x)) stop("argument \"x\" must be a 'multi_tpfit' object.")
 
@@ -83,10 +85,20 @@ function(x, data, coords, grid, radius, fixed=FALSE) {
   rownames(pred) <- NULL
   rownames(simu) <- NULL
   rownames(prhat) <- NULL
-  res <- data.frame(grid, simu, pred, prhat)
-  names(res) <- c(x$coordsnames, "Simulation", "Prediction", levelLab)
+  # COMPUTATION OF THE ENTROPY
+  if (entropy) {
+    entr <- .C("entropy", n = dim(prhat), probs = as.double(prhat),
+               entr = double(2 * nrs), PACKAGE = "spMC")$entr
+    res <- data.frame(grid, simu, pred, prhat, matrix(entr, nrs, 2L))
+    names(res) <- c(colnames(coords), "Simulation", "Prediction", levelLab, 
+                    "Entropy", "Std.Entropy")
+  } else {
+    res <- data.frame(grid, simu, pred, prhat)
+    names(res) <- c(colnames(coords), "Simulation", "Prediction", levelLab)
+  }
   tipo <- if (fixed) {"Fixed"} else {"Random"}
   attr(res, "type") <- paste(tipo, "Path Simulation")
+  attr(res, "entropy") <- entropy
   attr(res, "packageVersion") <- paste(packageVersion("spMC"))
   class(res) <- c("data.frame", "spsim")
   return(res)

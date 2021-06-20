@@ -9,7 +9,7 @@ The function simulates a random field through the Indicator Cokriging technique.
 }
 
 \usage{
-sim_ck(x, data, coords, grid, knn = 12, ordinary = TRUE)}
+sim_ck(x, data, coords, grid, knn = 12, ordinary = TRUE, entropy = FALSE)}
 
 \arguments{
 %%        x a multi_tpfit object
@@ -21,12 +21,14 @@ sim_ck(x, data, coords, grid, knn = 12, ordinary = TRUE)}
 %%       GA boolean (if TRUE genetic algorithm is applied rather than simulated annealing)
 %%   optype character with the objective function to minimize after the simulation
 %%   max.it maximum number of iteration for the optimization method
+%%  entropy logical value to compute uncertainties
   \item{x}{an object of the class \code{multi_tpfit}, typically with the output of the function \code{\link{multi_tpfit}}.}
   \item{data}{a categorical data vector of length \eqn{n}{n}.}
   \item{coords}{an \eqn{n \times d}{n x d} matrix where each row denotes the \eqn{d}{d}-D coordinates of data locations.}
   \item{grid}{an \eqn{m \times d}{m x d} matrix where each row denotes the \eqn{d}{d}-D coordinates in the simulation grid.}
   \item{knn}{an integer value which specifies the number of k-nearest neighbours for each simulation point. An optimal number is between 4 and 12. If \code{NULL} all observations are considered (just for very small dataset!!). It is \code{12} by default.}
   \item{ordinary}{a logical value; if \code{FALSE}, the probabilities are computed through the Simple coKriging technique, otherwise the Ordinary coKriging method is used.}
+  \item{entropy}{a logical value. If \code{TRUE}, the prediction uncertainties are computed through the entropy (and standardized entropy). The default value is \code{FALSE}.}
 }
 
 \details{
@@ -41,7 +43,7 @@ Probabilities approximated are usually truncated and normalized with respect to 
 When an initial configuration is simulated, it should be modified to reach a pattern similar to the sample by the use of the \code{\link{quench}} function.
 }
 
-\value{A data frame containing the simulation grid, the simulated random field, predicted values and the approximated probabilities.}
+\value{A data frame containing the simulation grid, the simulated random field, predicted values and the approximated probabilities is returned. Two extra columns respectively denoting the entropy and standardized entorpy are bindend to the data frame when argument \code{entropy = TRUE}.}
 
 \references{Carle, S. F., Fogg, G. E. (1996) Transition Probability-Based Indicator Geostatistics. \emph{Mathematical Geosciences}, \bold{28}(4), 453-476.
 
@@ -51,7 +53,7 @@ Sartore, L. (2010) Geostatistical models for 3-D data. M.Phil. thesis, Ca' Fosca
 
 %Tolosana-Delgado, R., Pawlowsky-Glahn, V., Egozcue, J.J. (2008) Indicator Kriging without Order Relation Violations. \emph{Mathematical Geosciences}, \bold{40}(3), 327-347.
 
-Weise, T. (2009) \emph{Global Optimization Algorithms - Theory and Application}. \url{http://www.it-weise.de/}.}
+Weise, T. (2009) \emph{Global Optimization Algorithms - Theory and Application}. \url{http://www.it-weise.de/projects/book.pdf}.}
 
 \author{Luca Sartore \email{drwolf85@gmail.com}}
 %%\note{

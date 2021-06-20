@@ -8,7 +8,7 @@
 The function simulates a random field through the Multinomial Categorical Simulation technique (MCS).
 }
 
-\usage{sim_mcs(x, data, coords, grid, knn = NULL)}
+\usage{sim_mcs(x, data, coords, grid, knn = NULL, entropy = FALSE)}
 
 \arguments{
 %%        x a multi_tpfit object
@@ -16,11 +16,13 @@ The function simulates a random field through the Multinomial Categorical Simula
 %%   coords coordinates matrix
 %%     grid simulation points
 %%      knn number of k-nearest neighbours (if NULL all data are neighbours)
+%%  entropy logical value to compute uncertainties
   \item{x}{an object of the class \code{multi_tpfit}, typically with the output of the function \code{\link{multi_tpfit}}.}
   \item{data}{a categorical data vector of length \eqn{n}{n}.}
   \item{coords}{an \eqn{n \times d}{n x d} matrix where each row denotes the \eqn{d}{d}-D coordinates of data locations.}
   \item{grid}{an \eqn{m \times d}{m x d} matrix where each row denotes the \eqn{d}{d}-D coordinates in the simulation grid.}
   \item{knn}{an integer value which specifies the number of k-nearest neighbours for each simulation point. If \code{NULL} (by default), all observations are considered.}
+  \item{entropy}{a logical value. If \code{TRUE}, the prediction uncertainties are computed through the entropy (and standardized entropy). The default value is \code{FALSE}.}
 }
 
 \details{
@@ -29,7 +31,7 @@ This method computes an approximation of posterior probabilities
 \eqn{\hspace{0cm}}{where i = 1, ..., n.} The algorithm is based on the Bayesian maximum entropy approach and it honours both the model structure and observed data.
 }
 
-\value{A data frame containing the simulation grid, the simulated random field, predicted values and the approximated probabilities.}
+\value{A data frame containing the simulation grid, the simulated random field, predicted values and the approximated probabilities is returned. Two extra columns respectively denoting the entropy and standardized entorpy are bindend to the data frame when argument \code{entropy = TRUE}.}
 
 \references{Allard, D., D'Or, D., Froidevaux, R. (2011) An efficient maximum entropy approach for categorical variable prediction. \emph{European Journal of Soil Science}, \bold{62}(3), 381-393.
 

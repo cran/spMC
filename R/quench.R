@@ -70,8 +70,9 @@ function(x, data, coords, sim, GA = FALSE, optype = c("param", "fullprobs", "sem
 
   # OPTIMIZATION PROCEDURE #
   toOptim <- function(x, mySim, grid) {
+    mySim <- levLabels[mySim]
     xnew <- list()
-    xnew$coefficients <- lapply(1:nc, function(i) {
+    xnew$coefficients <- lapply(1L:nc, function(i) {
       ml <- mlen(mySim, grid, loc.id[, i], dire.mat[i, ])
       Rmat <- embed_MC(mySim, grid, loc.id[, i], dire.mat[i, ])
       diag(Rmat) <- -1

@@ -1,5 +1,5 @@
 "sim_ik" <- 
-function(x, data, coords, grid, knn = 12, ordinary = TRUE) {
+function(x, data, coords, grid, knn = 12, ordinary = TRUE, entropy = FALSE) {
   # Generation of conditional simulation based on Kriging
   #
   #        x a multi_tpfit object
@@ -11,6 +11,7 @@ function(x, data, coords, grid, knn = 12, ordinary = TRUE) {
   #       GA boolean (if TRUE genetic algorithm is applied rather than simulated annealing)
   #   optype character with the objective function to minimize after the simulation
   #   max.it maximum number of iteration for the optimization method
+  #  entropy logical value to compute uncertainties
 
   ordinary <- as.logical(ordinary)
   if(!is.multi_tpfit(x)) stop("argument \"x\" must be a 'multi_tpfit' object.")
@@ -88,11 +89,22 @@ function(x, data, coords, grid, knn = 12, ordinary = TRUE) {
   tmpfct <- factor(tmpfct, labels = levLabels)
   old <- tmpfct[initSim]
   pred <- tmpfct[pred]
-  res <- data.frame(grid, old, pred, probs)
-  names(res) <- c(colnames(coords), "Simulation", "Prediction", levLabels)
+  
+  # COMPUTATION OF THE ENTROPY
+  if (entropy) {
+    entr <- .C("entropy", n = dim(probs), probs = as.double(probs),
+               entr = double(2 * nrs), PACKAGE = "spMC")$entr
+    res <- data.frame(grid, old, pred, probs, matrix(entr, nrs, 2L))
+    names(res) <- c(colnames(coords), "Simulation", "Prediction", levLabels, 
+                    "Entropy", "Std.Entropy")
+  } else {
+    res <- data.frame(grid, old, pred, probs)
+    names(res) <- c(colnames(coords), "Simulation", "Prediction", levLabels)
+  }
   res[path, ] <- res
   attr(res, "type") <- paste(ifelse(ordinary, "Ordinary", "Simple"), 
                              "Indicator Kriging Simulation")
+  attr(res, "entropy") <- entropy
   attr(res, "packageVersion") <- paste(packageVersion("spMC"))
   class(res) <- c("data.frame", "spsim")
   return(res)

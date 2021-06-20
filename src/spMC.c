@@ -143,9 +143,10 @@ void embedTProbs(int *nk, double *tp) {
       rwsum += tp[i + *nk * j];
     }
 
-    for (j = 0; j < *nk; j++) {
-      tp[i + *nk * j] /= rwsum;
-    }
+    if (rwsum > 0.0) 
+      for (j = 0; j < *nk; j++) {
+        tp[i + *nk * j] /= rwsum;
+      }
   }
 
 }
@@ -2842,4 +2843,31 @@ void fastobjfun(int *knn, int *indices, int *nrs, int *nk, int *nc, int *nr, int
   }
 #endif
   free(revcoef);
+}
+
+
+void entropy(int *n, double *probs, double *entr) {
+/* Fast computation of the uncertainties through the entropy
+        *n - vector containing the number of row and columns of *probs
+    *probs - matrix of probabilities
+     *entr - a two column matrix. The first columns (first elements in
+             the vector) contains the entropy (to be computed through
+             this function), while the second contains the standardized
+             entropy. */
+  int i, j, pos;
+  double fc = 1.0 / log((double) n[1]);
+
+#if __VOPENMP
+  #pragma omp parallel for default(shared) private(i, j, pos) schedule(static, 1)
+#endif  
+  for (i = 0; i < *n; i++) {
+    entr[i] = 0.0;
+    for (j = 0; j < n[1]; j++) {
+        pos = *n * j + i;
+        if (probs[pos] > 0.0) {
+            entr[i] -= probs[pos] * log(probs[pos]);
+        }
+    }
+    entr[*n + i] = entr[i] * fc;
+  }
 }

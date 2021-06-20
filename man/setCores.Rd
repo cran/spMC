@@ -4,7 +4,7 @@
 
 \title{Set the number of CPU cores for HPC}
 
-\description{The function set the number of CPU cores for parallel computation by the use of OpenMP library (\url{http://openmp.org/}). If the package was not complied with the library OpenMP (>= 3.0), this function is disabled.}
+\description{The function set the number of CPU cores for parallel computation by the use of OpenMP library (\url{https://www.openmp.org/}). If the package was not complied with the library OpenMP (>= 3.0), this function is disabled.}
 
 \usage{setCores(n)}
 

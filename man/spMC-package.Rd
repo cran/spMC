@@ -7,6 +7,7 @@
 \title{Continuous Lag Spatial Markov Chains}
 
 \description{
+\if{html}{\figure{logo.svg}{options: align='right'}}
 The main goal of this package is to provide a set of functions for
  \enumerate{
   \item the stratum lengths analysis along a chosen direction,
@@ -20,8 +21,8 @@ The main goal of this package is to provide a set of functions for
 \tabular{ll}{
 Package: \tab spMC\cr
 Type: \tab Package\cr
-Version: \tab 0.3.10\cr
-Date: \tab 2019-03-04\cr
+Version: \tab 0.3.11\cr
+Date: \tab 2021-06-19\cr
 License: \tab GPL (>= 2)\cr
 LazyLoad: \tab yes\cr
 }
@@ -60,11 +61,13 @@ Pickard, D. K. (1980) Unilateral Markov Fields. \emph{Advances in Applied Probab
 
 Sartore, L. (2010) Geostatistical models for 3-D data. M.Phil. thesis, Ca' Foscari University of Venice.
 
+Sartore, L. (2013). spMC: Modelling Spatial Random Fields with Continuous Lag Markov Chains. \emph{The R Journal}, \bold{5}(2), 16-28.
+
 Sartore, L., Fabbri, P. and Gaetan, C. (2016). spMC: an R-package for 3D lithological reconstructions based on spatial Markov chains. \emph{Computers & Geosciences}, \bold{94}(September), 40-47.
 
 %Tolosana-Delgado, R., Pawlowsky-Glahn, V., Egozcue, J.J. (2008) Indicator Kriging without Order Relation Violations. \emph{Mathematical Geosciences}, \bold{40}(3), 327-347.
 
-Weise, T. (2009) \emph{Global Optimization Algorithms - Theory and Application}. \url{http://www.it-weise.de/}.
+Weise, T. (2009) \emph{Global Optimization Algorithms - Theory and Application}. \url{http://www.it-weise.de/projects/book.pdf}.
 }
 
 \keyword{package}

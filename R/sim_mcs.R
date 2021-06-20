@@ -1,13 +1,14 @@
 sim_mcs <-
-function(x, data, coords, grid, knn = NULL) {
+function(x, data, coords, grid, knn = NULL, entropy = FALSE) {
   # Generation of Multinomial Categorical Simulation (MCS)
   #
-  #      x a multi_tpfit object
-  #   data vector of data
-  # coords coordinates matrix
-  #   grid simulation points
-  #    knn number of k-nearest neighbours (if NULL all data are neighbours)
-  # radius radius to find neighbour points
+  #       x a multi_tpfit object
+  #    data vector of data
+  #  coords coordinates matrix
+  #    grid simulation points
+  #     knn number of k-nearest neighbours (if NULL all data are neighbours)
+  #  radius radius to find neighbour points
+  # entropy logical value to compute uncertainties
 
   if(!is.multi_tpfit(x)) stop("argument \"x\" must be a 'multi_tpfit' object.")
 
@@ -97,10 +98,20 @@ function(x, data, coords, grid, knn = NULL) {
   tmpfct <- factor(tmpfct, labels = levelLab)
   sim <- tmpfct[sim]
   pred <- tmpfct[pred]
-  res <- data.frame(grid, sim, pred, prhat)
-  names(res) <- c(colnames(coords), "Simulation", "Prediction", levelLab)
+  # COMPUTATION OF THE ENTROPY
+  if (entropy) {
+    entr <- .C("entropy", n = dim(prhat), probs = as.double(prhat),
+               entr = double(2 * nrs), PACKAGE = "spMC")$entr
+    res <- data.frame(grid, sim, pred, prhat, matrix(entr, nrs, 2L))
+    names(res) <- c(colnames(coords), "Simulation", "Prediction", levelLab, 
+                    "Entropy", "Std.Entropy")
+  } else {
+    res <- data.frame(grid, sim, pred, prhat)
+    names(res) <- c(colnames(coords), "Simulation", "Prediction", levelLab)
+  }
   res[path, ] <- res
   attr(res, "type") <- "Multinomial Categorical Simulation"
+  attr(res, "entropy") <- entropy
   attr(res, "packageVersion") <- paste(packageVersion("spMC"))
   class(res) <- c("data.frame", "spsim")
   return(res)

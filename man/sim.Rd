@@ -8,7 +8,7 @@
 The function simulates a random field. The simulation methods available are based on Indicator Kriging techniques (IK and CK), Fixed and Random Path (PATH) and Multinomial Categorical Simulation (MCS).
 }
 
-\usage{sim(x, data, coords, grid, method = "ik", ...)}
+\usage{sim(x, data, coords, grid, method = "ik", ..., entropy = FALSE)}
 
 \arguments{
 %%          x a multi.tpfit object
@@ -17,6 +17,7 @@ The function simulates a random field. The simulation methods available are base
 %%       grid simulation points
 %%     method method to perform prediction and simulation c("ik", "ck", "path", "mcs")
 %%        ... further option to pass to the function sim_*
+%%    entropy logical value to compute uncertainties
 %%
 %%   Further arguments for Indicator Kriging (ik) and coKriging (ck)
 %%        knn number of k-nearest neighbours
@@ -38,6 +39,7 @@ The function simulates a random field. The simulation methods available are base
   \item{grid}{an \eqn{m \times d}{m x d} matrix where each row denotes the \eqn{d}{d}-D coordinates in the simulation grid.}
   \item{method}{a character object specifying the method to simulate the random field. Possible choises are \code{"ik"} (by default) for the indicator Kriging, \code{"ck"} for the indicator coKriging, \code{"path"} for the fixed and random path and \code{"mcs"} for the multinomial categorical simulation method.}
   \item{\dots}{other arguments to pass to the functions \code{\link{sim_ik}}, \code{\link{sim_ck}}, \code{\link{sim_path}} or \code{\link{sim_mcs}}.}
+  \item{entropy}{a logical value. If \code{TRUE}, the prediction uncertainties are computed through the entropy (and standardized entropy). The default value is \code{FALSE}.}
 }
 
 \details{
@@ -48,7 +50,7 @@ The methods implemented compute the approximation of posterior probabilities
 Once the probabilities are calculated for all the points in the simulation grid, the predictions (based on most probable category) and simulations are returned.
 }
 
-\value{A data frame containing the simulation grid, the simulated random field, predicted values and the approximated probabilities.}
+\value{A data frame containing the simulation grid, the simulated random field, predicted values and the approximated probabilities is returned. Two extra columns respectively denoting the entropy and standardized entorpy are bindend to the data frame when argument \code{entropy = TRUE}.}
 
 \references{Allard, D., D'Or, D., Froidevaux, R. (2011) An efficient maximum entropy approach for categorical variable prediction. \emph{European Journal of Soil Science}, \bold{62}(3), 381-393.
 
@@ -66,7 +68,7 @@ Sartore, L. (2010) Geostatistical models for 3-D data. M.Phil. thesis, Ca' Fosca
 
 %Tolosana-Delgado, R., Pawlowsky-Glahn, V., Egozcue, J.J. (2008) Indicator Kriging without Order Relation Violations. \emph{Mathematical Geosciences}, \bold{40}(3), 327-347.
 
-Weise, T. (2009) \emph{Global Optimization Algorithms - Theory and Application}. \url{http://www.it-weise.de/}.}
+Weise, T. (2009) \emph{Global Optimization Algorithms - Theory and Application}. \url{http://www.it-weise.de/projects/book.pdf}.}
 
 \seealso{\code{\link{sim_ik}}, \code{\link{sim_ck}}, \code{\link{sim_path}}, \code{\link{sim_mcs}}}
 

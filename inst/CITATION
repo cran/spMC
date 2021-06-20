@@ -10,21 +10,21 @@
 #         textVersion=paste0("Sartore L. (", year, "). spMC: Continuous-Lag Spatial Markov Chains. 
 #                     R package version ", meta$Version, ", 
 #                     <URL: https://CRAN.R-project.org/package=spMC>."))
-bibentry("Manual",
-         title  = "spMC: Continuous Lag Spatial Markov Chains",
-         author = meta$Author,
-         year   = strsplit(meta$Date, "-")[[1L]][1L],
-         note   = paste("R package version", meta$Version),
-         url = "https://CRAN.R-project.org/package=spMC",
-         textVersion = 
-         paste(meta$Author,
-               " (", strsplit(meta$Date, "-")[[1L]][1L], "). ", 
-               "spMC: Continuous Lag Spatial Markov Chains. ",
-               "R package version ", meta$Version, 
-               " <URL: https://CRAN.R-project.org/package=spMC>.", sep=""),
-
-         header = gettextf("To cite package %s in publications use:", sQuote("spMC")))
-
+#bibentry("Manual",
+#         title  = "spMC: Continuous Lag Spatial Markov Chains",
+#         author = meta$Author,
+#         year   = strsplit(meta$Date, "-")[[1L]][1L],
+#         note   = paste("R package version", meta$Version),
+#         url = "https://CRAN.R-project.org/package=spMC",
+#         textVersion = 
+#         paste(meta$Author,
+#               " (", strsplit(meta$Date, "-")[[1L]][1L], "). ", 
+#               "spMC: Continuous Lag Spatial Markov Chains. ",
+#               "R package version ", meta$Version, 
+#               " <URL: https://CRAN.R-project.org/package=spMC>.", sep=""),
+#
+#         header = gettextf("To cite package %s in publications use:", sQuote("spMC")))
+#
 citEntry(
  entry="Article",
  title= "spMC: an R-package for 3D lithological reconstructions based on spatial Markov chains",
@@ -35,6 +35,7 @@ citEntry(
  year="2016",
  author="Luca Sartore and Paolo Fabbri and Carlo Gaetan",
  doi="10.1016/j.cageo.2016.06.001",
+ url="https://doi.org/10.1016/j.cageo.2016.06.001",
  textVersion="Sartore, L., Fabbri, P., & Gaetan, C. (2016) spMC: an R-package 
    for 3D lithological reconstructions based on spatial Markov chains.
    Computers and Geosciences. 94:40-47."
@@ -51,6 +52,8 @@ citEntry(
  month="December",
  author="Luca Sartore",
  issn="2073-4859",
+ doi="10.32614/rj-2013-022",
+ url="https://doi.org/10.32614/RJ-2013-022",
  textVersion="Sartore, L. (2013) spMC: Modelling Spatial Random Fields 
    with Continuous Lag Markov Chains. The R Journal. 5/2:16-28."
 )

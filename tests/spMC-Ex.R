@@ -71,13 +71,13 @@ mygrid <- as.matrix(expand.grid(mygrid$X, mygrid$Y, mygrid$Z))
 
 # Simulate the random field through
 # Simple Indicator Cokriging algorithm and
-# optimize by Simulated Annealing
 myANSimP <- sim_ck(x, ACM$MAT5, ACM[, 1:3], mygrid)
+myANSimE <- sim_ck(x, ACM$MAT5, ACM[, 1:3], mygrid, entropy = TRUE)
 
 # Simulate the random field through
 # Ordinary Indicator Cokriging algorithm and
-# optimize by Genetic Algorithm
-myGASimS <- sim_ck(x, ACM$MAT5, ACM[, 1:3], mygrid)
+myGASimS <- sim_ck(x, ACM$MAT5, ACM[, 1:3], mygrid, ordinary = TRUE)
+myGASimE <- sim_ck(x, ACM$MAT5, ACM[, 1:3], mygrid, ordinary = TRUE, entropy = TRUE)
 
 ### Name: density.lengths
 ### Title: Empirical Densities Estimation of Stratum Lengths
@@ -115,14 +115,16 @@ hist(gl)
 # Simulate the random field through
 # Simple Indicator Kriging algorithm and
 # optimize by Simulated Annealing
+myANSimE <- sim_ik(x, ACM$MAT5, ACM[, 1:3], mygrid, ordinary = FALSE, entropy = TRUE)
 myANSimP <- sim_ik(x, ACM$MAT5, ACM[, 1:3], mygrid, ordinary = FALSE)
-myANSimP <- quench(x, ACM$MAT5, ACM[, 1:3], myANSimP, optype = "param", max.it = 2)
 myANSimF <- quench(x, ACM$MAT5, ACM[, 1:3], myANSimP, optype = "fullprobs", max.it = 2)
+myANSimP <- quench(x, ACM$MAT5, ACM[, 1:3], myANSimP, optype = "param", max.it = 2)
 
 # Simulate the random field through
 # Ordinary Indicator Kriging algorithm and
 # optimize by Genetic Algorithm
 myGASimS <- sim_ik(x, ACM$MAT5, ACM[, 1:3], mygrid)
+myGASimE <- sim_ik(x, ACM$MAT5, ACM[, 1:3], mygrid, entropy = TRUE)
 myGASimS <- quench(x, ACM$MAT5, ACM[, 1:3], myGASimS, GA = TRUE, optype = "semiprobs", max.it = 2)
 myGASimC <- quench(x, ACM$MAT5, ACM[, 1:3], myGASimS, GA = TRUE, optype = "coordprobs", max.it = 2)
 
@@ -261,6 +263,7 @@ is.transiogram(ETPr)
 
 # Simulate the random field
 myMCSim <- sim_mcs(x, ACM$MAT5, ACM[, 1:3], mygrid)
+myMCSiE <- sim_mcs(x, ACM$MAT5, ACM[, 1:3], mygrid, entropy = TRUE)
 
 ### Name: metpfit
 ### It will be tested during the multi_tpfit_me() example
@@ -327,10 +330,13 @@ multi_tpfit_me(ACM$MAT3, ACM[, 1:3], mle = "mdn")
 # the fixed path algorithm
 myFixPathSim <- sim_path(x, ACM$MAT5, ACM[, 1:3], mygrid,
                          radius = 50, fixed = TRUE)
+myFixPathSiE <- sim_path(x, ACM$MAT5, ACM[, 1:3], mygrid,
+                         radius = 50, fixed = TRUE, entropy = TRUE)
 
 # Simulate the random field through
 # the random path algorithm
 myRndPathSim <- sim_path(x, ACM$MAT5, ACM[, 1:3], mygrid, radius = 50)
+myRndPathSiE <- sim_path(x, ACM$MAT5, ACM[, 1:3], mygrid, radius = 50, entropy = TRUE)
 
 ### Name: plot.density.lengths
 ### Title: Plot Empirical Densities Estimates of Stratum Lengths
@@ -449,8 +455,7 @@ print(sgl)
 ### ** Examples
 
 # Print results
-print(MoPa)
-
+ 
 ### Name: print.transiogram
 ### Title: Printing Theoretical or Empirical One-dimensional Transiograms
 ### Aliases: print.transiogram
