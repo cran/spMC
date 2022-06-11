@@ -1,14 +1,14 @@
-# spMC: Continuous-Lag Spatial Markov Chains <img src="man/figures/logo.svg" align="right" alt="inca logo" />
+# spMC: Continuous-Lag Spatial Markov Chains
 
-### Authors
+### Authors <img src="man/figures/logo.svg" align="right" alt="spMC logo" />
 [Luca Sartore](mailto://drwolf85@gmail.com)
 
 Maintainer: [Luca Sartore](mailto://drwolf85@gmail.com)
 
-[![](https://www.r-pkg.org/badges/version/spMC)](https://www.r-pkg.org/pkg/spMC)
-[![GPLv2 license](https://img.shields.io/badge/License-GPLv2-yellow.svg)](http://perso.crans.org/besson/LICENSE.html)
-[![DOI](https://zenodo.org/badge/doi/10.32614/RJ-2013-022.svg)](http://dx.doi.org/10.32614/rj-2013-022)
-[![DOI](https://zenodo.org/badge/doi/10.1016/j.cageo.2016.06.001.svg)](http://dx.doi.org/10.1016/j.cageo.2016.06.001)
+[![](https://www.r-pkg.org/badges/version/spMC)](https://CRAN.R-project.org/package=spMC)
+[![GPLv2 license](https://img.shields.io/badge/License-GPLv2-yellow.svg)](https://perso.crans.org/besson/LICENSE.html)
+[![DOI](https://zenodo.org/badge/doi/10.32614/RJ-2013-022.svg)](https://dx.doi.org/10.32614/rj-2013-022)
+[![DOI](https://zenodo.org/badge/doi/10.1016/j.cageo.2016.06.001.svg)](https://dx.doi.org/10.1016/j.cageo.2016.06.001)
 [![CRAN RStudio mirror downloads](https://cranlogs.r-pkg.org/badges/spMC)](https://www.r-pkg.org/pkg/spMC)
 [![Total Downloads from CRAN RStudio mirror](https://cranlogs.r-pkg.org/badges/grand-total/spMC?color=orange)](https://CRAN.R-project.org/package=spMC)
 

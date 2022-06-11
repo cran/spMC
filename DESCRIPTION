@@ -1,20 +1,20 @@
 Package: spMC
 Type: Package
 Title: Continuous-Lag Spatial Markov Chains
-Version: 0.3.11
-Date: 2021-06-19
+Version: 0.3.12
+Date: 2022-06-11
 Authors@R: c(person("Luca", "Sartore",
                     role = c("aut", "cre"),
                     email = "drwolf85@gmail.com",
                     comment = c(ORCID = "0000-0002-0446-1328")))
 Maintainer: Luca Sartore <drwolf85@gmail.com>
-Description: A set of functions is provided for 1) the stratum lengths analysis along a chosen direction, 2) fast estimation of continuous lag spatial Markov chains model parameters and probability computing (also for large data sets), 3) transition probability maps and transiograms drawing, 4) simulation methods for categorical random fields.
+Description: A set of functions is provided for 1) the stratum lengths analysis along a chosen direction, 2) fast estimation of continuous lag spatial Markov chains model parameters and probability computing (also for large data sets), 3) transition probability maps and transiograms drawing, 4) simulation methods for categorical random fields. More details on the methodology are discussed in Sartore (2013) <doi:10.32614/RJ-2013-022> and Sartore et al. (2016) <doi:10.1016/j.cageo.2016.06.001>.
 Depends: R (>= 3.0.0), base, methods, datasets, utils, grDevices,
         graphics, stats
 License: GPL (>= 2)
 LazyLoad: yes
 NeedsCompilation: yes
-Packaged: 2021-06-19 19:26:12 UTC; sartore
+Packaged: 2022-06-11 20:14:51 UTC; sartore
 Author: Luca Sartore [aut, cre] (<https://orcid.org/0000-0002-0446-1328>)
 Repository: CRAN
-Date/Publication: 2021-06-20 10:00:02 UTC
+Date/Publication: 2022-06-11 21:20:02 UTC

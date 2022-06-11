@@ -1,5 +1,14 @@
 spMC News
 
+CHANGES IN spMC 0.3.12
+
+  BUG FIXES:
+
+    o The URLs and images in the file README.md have been fixed.
+    
+    o The file man/spMC-package.Rd has been corrected at the <img>
+      attribute "align" using `float:right;` instead.
+
 CHANGES IN spMC 0.3.11
 
   NEW FEATURES:

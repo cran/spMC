@@ -7,7 +7,7 @@
 \title{Continuous Lag Spatial Markov Chains}
 
 \description{
-\if{html}{\figure{logo.svg}{options: align='right'}}
+\if{html}{\figure{logo.svg}{options: style='float:right;'}}
 The main goal of this package is to provide a set of functions for
  \enumerate{
   \item the stratum lengths analysis along a chosen direction,
@@ -21,8 +21,8 @@ The main goal of this package is to provide a set of functions for
 \tabular{ll}{
 Package: \tab spMC\cr
 Type: \tab Package\cr
-Version: \tab 0.3.11\cr
-Date: \tab 2021-06-19\cr
+Version: \tab 0.3.12\cr
+Date: \tab 2022-06-11\cr
 License: \tab GPL (>= 2)\cr
 LazyLoad: \tab yes\cr
 }

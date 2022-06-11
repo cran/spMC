@@ -1,7 +1,7 @@
 eb723b61539feef013de476e68b5c50a *COPYING
-ce169a0f862fd2af4608fdf095287877 *DESCRIPTION
+3f6321407100d1f7b8e70b0410d60c88 *DESCRIPTION
 025f71ccc055572fe1c213af83a6dc28 *NAMESPACE
-0031da67016c2a984319bee6117bbad4 *NEWS
+9c74c5995f39a455600fca9da58ea05e *NEWS
 d603d525631fb0865a7ab334d96c1c0f *R/boxplot.lengths.R
 9e4f748444fccbda8da0c8b1a16a47c0 *R/contour.pemt.R
 30e09c5aa0ad4fd90aab0c7897bc100a *R/density.lengths.R
@@ -53,7 +53,7 @@ c53c046db95728558db41f700a2c3b44 *R/tpfit_ml.R
 2ff66bb2170dbec835b65b0a7de4e123 *R/transiogram.R
 169cdb422907a678f18cd218f3d0f5e2 *R/which_lines.R
 b3177146addd83727b0838935243051e *R/zzz.R
-7fef6562625b96a34a8dd9de9297a3f8 *README.md
+9906ceb515c741e5e1c280211f401ae7 *README.md
 029ff19917b82939c8bfc796f4cb6f82 *cleanup
 f706907a932812aa837934644b0d7d10 *data/ACM.rda
 2040b9c6ef06f8ba501a9b6c1b9b8c3f *inst/CITATION
@@ -102,7 +102,7 @@ dc228aa0e4267a56eaa1f0c06d691f58 *man/sim_ck.Rd
 aba931128ef4e1d373633c68b5cccac6 *man/sim_ik.Rd
 8c7af3bffd125e6e90266fbe428efdd6 *man/sim_mcs.Rd
 ecc761a44551d28d8420025e6f6a2d34 *man/sim_path.Rd
-84881594387fc65492e1bd915cfe0e1d *man/spMC-package.Rd
+e4f3187d8b8bf849b76bb0b6036b4d8b *man/spMC-package.Rd
 ad980a9d6b22c2c0838cab92e0dd541a *man/summary.lengths.Rd
 1df04e4bf2b7ce77f24a1055c863a2cd *man/tpfit.Rd
 122ed17661148a70da4e78be743fc758 *man/tpfit_ils.Rd
