@@ -1,7 +1,7 @@
 # spMC: Continuous-Lag Spatial Markov Chains
 
 ### Authors <img src="man/figures/logo.svg" align="right" alt="spMC logo" />
-[Luca Sartore](mailto://drwolf85@gmail.com)
+[Luca Sartore](mailto://drwolf85@gmail.com)[<img alt="ORCID iD" src="https://cran.r-project.org/web/orcid.svg" width="16px" height="16px" style="width:16px; height:16px; margin-left:4px; margin-right:4px; vertical-align:middle">](https://orcid.org/0000-0002-0446-1328) 
 
 Maintainer: [Luca Sartore](mailto://drwolf85@gmail.com)
 
@@ -54,5 +54,5 @@ Sartore, L. (2013). spMC: Modelling Spatial Random Fields with Continuous Lag Ma
 
 Sartore, L., Fabbri, P. and Gaetan, C. (2016). spMC: an R-package for 3D lithological reconstructions based on spatial Markov chains. *Computers & Geosciences*, **94**(September), 40-47.
 
-Weise, T. (2009) *Global Optimization Algorithms - Theory and Application*. [http://www.it-weise.de/projects/book.pdf](http://www.it-weise.de/projects/book.pdf).
+Weise, T. (2009) *Global Optimization Algorithms - Theory and Application*. [[Archived copy]](https://archive.org/details/Thomas_Weise__Global_Optimization_Algorithms_Theory_and_Application/page/n57/mode/2up).
 

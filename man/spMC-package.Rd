@@ -21,8 +21,8 @@ The main goal of this package is to provide a set of functions for
 \tabular{ll}{
 Package: \tab spMC\cr
 Type: \tab Package\cr
-Version: \tab 0.3.12\cr
-Date: \tab 2022-06-11\cr
+Version: \tab 0.3.15\cr
+Date: \tab 2023-04-30\cr
 License: \tab GPL (>= 2)\cr
 LazyLoad: \tab yes\cr
 }
@@ -67,7 +67,7 @@ Sartore, L., Fabbri, P. and Gaetan, C. (2016). spMC: an R-package for 3D litholo
 
 %Tolosana-Delgado, R., Pawlowsky-Glahn, V., Egozcue, J.J. (2008) Indicator Kriging without Order Relation Violations. \emph{Mathematical Geosciences}, \bold{40}(3), 327-347.
 
-Weise, T. (2009) \emph{Global Optimization Algorithms - Theory and Application}. \url{http://www.it-weise.de/projects/book.pdf}.
+Weise, T. (2009) \emph{Global Optimization Algorithms - Theory and Application}. \url{https://archive.org/details/Thomas_Weise__Global_Optimization_Algorithms_Theory_and_Application}.
 }
 
 \keyword{package}

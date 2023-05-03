@@ -41,7 +41,7 @@ void getDst(int *, int *, double *, double *, double *);
 void fastMatProd(int *, int *, double *, int *, double *, double *);
 void jointProbs(int *, int *, int *, double *, double *);
 void tsimCate(int *, int *, double *, int *);
-SEXP isOmp();
+SEXP isOmp(void);
 void getNumCores(int *);
 void getNumSlaves(int *);
 void setNumSlaves(int *);

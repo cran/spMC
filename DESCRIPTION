@@ -1,8 +1,8 @@
 Package: spMC
 Type: Package
 Title: Continuous-Lag Spatial Markov Chains
-Version: 0.3.12
-Date: 2022-06-11
+Version: 0.3.15
+Date: 2023-04-30
 Authors@R: c(person("Luca", "Sartore",
                     role = c("aut", "cre"),
                     email = "drwolf85@gmail.com",
@@ -14,7 +14,7 @@ Depends: R (>= 3.0.0), base, methods, datasets, utils, grDevices,
 License: GPL (>= 2)
 LazyLoad: yes
 NeedsCompilation: yes
-Packaged: 2022-06-11 20:14:51 UTC; sartore
+Packaged: 2023-04-30 22:45:03 UTC; sartore
 Author: Luca Sartore [aut, cre] (<https://orcid.org/0000-0002-0446-1328>)
 Repository: CRAN
-Date/Publication: 2022-06-11 21:20:02 UTC
+Date/Publication: 2023-05-03 04:50:02 UTC

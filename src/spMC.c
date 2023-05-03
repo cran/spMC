@@ -300,7 +300,7 @@ void tsimCate(int *nk, int *n, double *prhat, int *initSim) {
   PutRNGstate();
 }
 
-SEXP isOmp() {
+SEXP isOmp(void) {
   SEXP ans;
   PROTECT(ans = allocVector(LGLSXP, 1));
   #if __VOPENMP
@@ -413,10 +413,11 @@ SEXP annealingSIM(SEXP maxIt, SEXP old, SEXP x, SEXP grid, SEXP expr, SEXP rho) 
   PROTECT(res = allocVector(REALSXP, 2));
   defineVar(install("x"), x, rho);
   defineVar(install("grid"), grid, rho);
-  prob = VECTOR_ELT(x, 0);
+  PROTECT(prob = VECTOR_ELT(x, 0));
   for (i = 1; i < length(x); i++) {
     if(strcmp(CHAR(STRING_ELT(getAttrib(x, R_NamesSymbol), i)), "prop") == 0) {
-      prob = VECTOR_ELT(x, i);
+      UNPROTECT(1);
+      PROTECT(prob = VECTOR_ELT(x, i));
       break;
     }
   }
@@ -509,7 +510,7 @@ SEXP annealingSIM(SEXP maxIt, SEXP old, SEXP x, SEXP grid, SEXP expr, SEXP rho) 
   free(xx);
   free(pvet);
   free(ctrlvet);
-  UNPROTECT(4);
+  UNPROTECT(5);
   return(old);
 }
 
@@ -539,10 +540,11 @@ SEXP geneticSIM(SEXP maxIt, SEXP old, SEXP x, SEXP grid, SEXP expr, SEXP rho) {
   PROTECT(res = allocVector(REALSXP, 4));
   defineVar(install("x"), x, rho);
   defineVar(install("grid"), grid, rho);
-  prob = VECTOR_ELT(x, 0);
+  PROTECT(prob = VECTOR_ELT(x, 0));
   for (i = 1; i < length(x); i++) {
     if(strcmp(CHAR(STRING_ELT(getAttrib(x, R_NamesSymbol), i)), "prop") == 0) {
-      prob = VECTOR_ELT(x, i);
+      UNPROTECT(1);
+      PROTECT(prob = VECTOR_ELT(x, i));
       break;
     }
   }
@@ -769,7 +771,7 @@ SEXP geneticSIM(SEXP maxIt, SEXP old, SEXP x, SEXP grid, SEXP expr, SEXP rho) {
   free(pvet);
   free(ctrlvet);
   free(tmpc);
-  UNPROTECT(6);
+  UNPROTECT(7);
   return(old);
 }
 
