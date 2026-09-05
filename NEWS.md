@@ -1,5 +1,14 @@
 # spMC News
 
+## CHANGES IN spMC 0.3.16
+
+* **BUG FIXES**
+
+  * Edited a reference link in the file `README.md`.
+
+  * Replaced `master` with `masked` in OpenMP statements in the 
+    C file `src/spMC.c`
+
 ## CHANGES IN spMC 0.3.15
 
 * **BUG FIXES**

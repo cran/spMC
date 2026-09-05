@@ -52,7 +52,7 @@ Sartore, L. (2010) Geostatistical models for 3-D data. M.Phil. thesis, Ca' Fosca
 
 %Tolosana-Delgado, R., Pawlowsky-Glahn, V., Egozcue, J.J. (2008) Indicator Kriging without Order Relation Violations. \emph{Mathematical Geosciences}, \bold{40}(3), 327-347.
 
-Weise, T. (2009) \emph{Global Optimization Algorithms - Theory and Application}. \url{https://archive.org/details/Thomas_Weise__Global_Optimization_Algorithms_Theory_and_Application}.}
+Weise, T. (2009) \emph{Global Optimization Algorithms - Theory and Application}. \url{https://www.researchgate.net/publication/200622167_Global_Optimization_Algorithm_Theory_and_Application}.}
 
 \author{Luca Sartore \email{drwolf85@gmail.com}}
 %%\note{

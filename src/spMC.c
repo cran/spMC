@@ -328,7 +328,7 @@ void getNumSlaves(int *n) {
   #if __VOPENMP
     #pragma omp parallel default(shared)
     {
-      #pragma omp master
+      #pragma omp masked
         *n = omp_get_num_threads();
     }
   #else

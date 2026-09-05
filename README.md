@@ -6,6 +6,7 @@
 Maintainer: [Luca Sartore](mailto://drwolf85@gmail.com)
 
 [![](https://www.r-pkg.org/badges/version/spMC)](https://CRAN.R-project.org/package=spMC)
+[![CRAN release](https://www.r-pkg.org/badges/ago/spMC)](https://cran.r-project.org/package=spMC)
 [![GPLv2 license](https://img.shields.io/badge/License-GPLv2-yellow.svg)](https://perso.crans.org/besson/LICENSE.html)
 [![DOI](https://zenodo.org/badge/doi/10.32614/RJ-2013-022.svg)](https://dx.doi.org/10.32614/rj-2013-022)
 [![DOI](https://zenodo.org/badge/doi/10.1016/j.cageo.2016.06.001.svg)](https://dx.doi.org/10.1016/j.cageo.2016.06.001)
@@ -54,5 +55,5 @@ Sartore, L. (2013). spMC: Modelling Spatial Random Fields with Continuous Lag Ma
 
 Sartore, L., Fabbri, P. and Gaetan, C. (2016). spMC: an R-package for 3D lithological reconstructions based on spatial Markov chains. *Computers & Geosciences*, **94**(September), 40-47.
 
-Weise, T. (2009) *Global Optimization Algorithms - Theory and Application*. [[Archived copy]](https://archive.org/details/Thomas_Weise__Global_Optimization_Algorithms_Theory_and_Application/page/n57/mode/2up).
+Weise, T. (2009) *Global Optimization Algorithms - Theory and Application*. [[Archived copy]](https://www.researchgate.net/publication/200622167_Global_Optimization_Algorithm_Theory_and_Application).
 
