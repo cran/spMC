@@ -1,9 +1,5 @@
 # Workflow derived from https://github.com/r-lib/actions/tree/v2/examples
-# Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
-#
-# NOTE: This workflow is overkill for most R packages and
-# check-standard.yaml is likely a better choice.
-# usethis::use_github_action("check-standard") will install it.
+
 on:
   push:
     branches: [main, master]
@@ -18,32 +14,38 @@ jobs:
   R-CMD-check:
     runs-on: ${{ matrix.config.os }}
 
-    name: ${{ matrix.config.os }} (${{ matrix.config.r }})
+    name: ${{ matrix.config.os }} / R-${{ matrix.config.r }} / ${{ matrix.config.compiler }}
+
+    continue-on-error: ${{ matrix.config.experimental }}
 
     strategy:
       fail-fast: false
       matrix:
         config:
-          - {os: macos-latest,   r: 'release'}
+          # macOS
+          - {os: macos-latest, r: 'release', compiler: 'gcc',   experimental: false}
+          - {os: macos-latest, r: 'devel',   compiler: 'gcc',   experimental: true}
+          - {os: macos-latest, r: 'release', compiler: 'clang', experimental: false}
+          - {os: macos-latest, r: 'devel',   compiler: 'clang', experimental: true}
 
-          #- {os: windows-latest, r: 'devel'}
-          #- {os: windows-latest, r: 'release'}
-          ## use 4.0 or 4.1 to check with rtools40's older compiler
-          #- {os: windows-latest, r: 'oldrel-4'}
+          # Ubuntu
+          - {os: ubuntu-latest, r: 'release', compiler: 'gcc',   experimental: false}
+          - {os: ubuntu-latest, r: 'devel',   compiler: 'gcc',   experimental: false, http-user-agent: 'release'}
+          - {os: ubuntu-latest, r: 'release', compiler: 'clang', experimental: false}
+          - {os: ubuntu-latest, r: 'devel',   compiler: 'clang', experimental: false, http-user-agent: 'release'}
 
-          - {os: ubuntu-latest,  r: 'devel', http-user-agent: 'release'}
-          - {os: ubuntu-latest,  r: 'release'}
-          #- {os: ubuntu-latest,  r: 'oldrel-1'}
-          #- {os: ubuntu-latest,  r: 'oldrel-2'}
-          #- {os: ubuntu-latest,  r: 'oldrel-3'}
-          #- {os: ubuntu-latest,  r: 'oldrel-4'}
+          # Windows
+          - {os: windows-latest, r: 'release', compiler: 'gcc',   experimental: true}
+          - {os: windows-latest, r: 'devel',   compiler: 'gcc',   experimental: true}
+          - {os: windows-latest, r: 'release', compiler: 'clang', experimental: true}
+          - {os: windows-latest, r: 'devel',   compiler: 'clang', experimental: true}
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: r-lib/actions/setup-pandoc@v2
 
@@ -52,14 +54,274 @@ jobs:
           r-version: ${{ matrix.config.r }}
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
+          Ncpus: '2'
+
+      # --------------------------------------------------------------------
+      # Linux compiler setup
+      # --------------------------------------------------------------------
+
+      - name: Install GCC on Linux
+        if: runner.os == 'Linux' && matrix.config.compiler == 'gcc'
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc g++ gfortran
+
+      - name: Configure R to use GCC on Linux
+        if: runner.os == 'Linux' && matrix.config.compiler == 'gcc'
+        shell: bash
+        run: |
+          mkdir -p ~/.R
+          cat > ~/.R/Makevars <<'EOF'
+          CC=gcc
+          CXX=g++
+          CXX11=g++
+          CXX14=g++
+          CXX17=g++
+          CXX20=g++
+          FC=gfortran
+          F77=gfortran
+          EOF
+
+      - name: Install Clang with OpenMP support on Linux
+        if: runner.os == 'Linux' && matrix.config.compiler == 'clang'
+        shell: bash
+        run: |
+          set -euo pipefail
+          source /etc/os-release
+          sudo apt-get update
+          sudo apt-get install -y gfortran wget gpg
+          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | \
+            sudo gpg --dearmor -o /usr/share/keyrings/llvm-archive-keyring.gpg
+          echo "deb [signed-by=/usr/share/keyrings/llvm-archive-keyring.gpg] http://apt.llvm.org/${UBUNTU_CODENAME}/ llvm-toolchain-${UBUNTU_CODENAME}-23 main" | \
+            sudo tee /etc/apt/sources.list.d/llvm.list > /dev/null
+          sudo apt-get update
+          sudo apt-get install -y clang-23 libomp-23-dev
+
+      - name: Configure R to use Clang with OpenMP on Linux
+        if: runner.os == 'Linux' && matrix.config.compiler == 'clang'
+        shell: bash
+        run: |
+          mkdir -p ~/.R
+
+          cat > ~/.R/Makevars <<'EOF'
+          CC=clang-23
+          CXX=clang++-23
+          CXX11=clang++-23
+          CXX14=clang++-23
+          CXX17=clang++-23
+          CXX20=clang++-23
+
+          FC=gfortran
+          F77=gfortran
+
+          SHLIB_OPENMP_CFLAGS=-fopenmp
+          SHLIB_OPENMP_CXXFLAGS=-fopenmp
+          SHLIB_OPENMP_FFLAGS=-fopenmp
+          SHLIB_OPENMP_FCFLAGS=-fopenmp
+          EOF
+
+      # --------------------------------------------------------------------
+      # macOS compiler setup
+      # --------------------------------------------------------------------
+
+      - name: Install and configure GCC on macOS
+        if: runner.os == 'macOS' && matrix.config.compiler == 'gcc'
+        shell: bash
+        run: |
+          brew update
+          brew install gcc
+
+          GCC_BIN="$(python3 - <<'PY'
+          import glob, re
+          paths = glob.glob('/opt/homebrew/bin/gcc-*') + glob.glob('/usr/local/bin/gcc-*')
+          paths = [p for p in paths if re.search(r'gcc-[0-9]+$', p)]
+          if not paths:
+              raise SystemExit("No Homebrew gcc-* binary found")
+          def version(path):
+              return int(re.search(r'gcc-([0-9]+)$', path).group(1))
+          print(max(paths, key=version))
+          PY
+          )"
+
+          GXX_BIN="${GCC_BIN/gcc-/g++-}"
+          GFORTRAN_BIN="${GCC_BIN/gcc-/gfortran-}"
+
+          echo "Using GCC:      ${GCC_BIN}"
+          echo "Using G++:      ${GXX_BIN}"
+          echo "Using gfortran: ${GFORTRAN_BIN}"
+
+          mkdir -p ~/.R
+          cat > ~/.R/Makevars <<EOF
+          CC=${GCC_BIN}
+          CXX=${GXX_BIN}
+          CXX11=${GXX_BIN}
+          CXX14=${GXX_BIN}
+          CXX17=${GXX_BIN}
+          CXX20=${GXX_BIN}
+          FC=${GFORTRAN_BIN}
+          F77=${GFORTRAN_BIN}
+          EOF
+
+      - name: Install and configure Clang on macOS
+        if: runner.os == 'macOS' && matrix.config.compiler == 'clang'
+        shell: bash
+        run: |
+          brew update
+          brew install llvm libomp
+
+          LLVM_PREFIX="$(brew --prefix llvm)"
+
+          echo "${LLVM_PREFIX}/bin" >> "${GITHUB_PATH}"
+
+          mkdir -p ~/.R
+          cat > ~/.R/Makevars <<EOF
+          CC=${LLVM_PREFIX}/bin/clang
+          CXX=${LLVM_PREFIX}/bin/clang++
+          CXX11=${LLVM_PREFIX}/bin/clang++
+          CXX14=${LLVM_PREFIX}/bin/clang++
+          CXX17=${LLVM_PREFIX}/bin/clang++
+          CXX20=${LLVM_PREFIX}/bin/clang++
+          CPPFLAGS=-I${LLVM_PREFIX}/include
+          LDFLAGS=-L${LLVM_PREFIX}/lib
+          EOF
+
+      - name: Use default macOS toolchain on R-devel
+        if: runner.os == 'macOS' && matrix.config.r == 'devel'
+        shell: bash
+        run: |
+          echo "Using default toolchain for macOS R-devel to avoid Homebrew toolchain incompatibilities."
+
+      # --------------------------------------------------------------------
+      # Windows compiler setup
+      # --------------------------------------------------------------------
+
+      - name: Configure R to use GCC on Windows
+        if: runner.os == 'Windows' && matrix.config.compiler == 'gcc'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force "$HOME/.R" | Out-Null
+
+          @"
+          CC=gcc
+          CXX=g++
+          CXX11=g++
+          CXX14=g++
+          CXX17=g++
+          CXX20=g++
+          FC=gfortran
+          F77=gfortran
+          "@ | Out-File -FilePath "$HOME/.R/Makevars.win" -Encoding ASCII
+
+      - name: Install LLVM 23 on Windows
+        if: runner.os == 'Windows' && matrix.config.compiler == 'clang'
+        shell: pwsh
+        run: |
+          $llvmVersion = '23.1.0'
+          $installer = Join-Path $env:RUNNER_TEMP "LLVM-$llvmVersion-win64.msi"
+          $wrapperDir = Join-Path $env:RUNNER_TEMP 'llvm23-bin'
+
+          Invoke-WebRequest `
+            -Uri "https://github.com/llvm/llvm-project/releases/download/llvmorg-$llvmVersion/LLVM-$llvmVersion-win64.msi" `
+            -OutFile $installer
+
+          Start-Process msiexec.exe `
+            -ArgumentList '/i', $installer, '/qn', '/norestart', 'ADDLOCAL=ALL' `
+            -Wait
+
+          New-Item -ItemType Directory -Force $wrapperDir | Out-Null
+
+          @"
+          @echo off
+          "C:\Program Files\LLVM\bin\clang.exe" --target=x86_64-w64-windows-gnu %*
+          "@ | Out-File -FilePath (Join-Path $wrapperDir 'clang23.cmd') -Encoding ASCII
+
+          @"
+          @echo off
+          "C:\Program Files\LLVM\bin\clang++.exe" --target=x86_64-w64-windows-gnu %*
+          "@ | Out-File -FilePath (Join-Path $wrapperDir 'clang++23.cmd') -Encoding ASCII
+
+          $wrapperDir | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+          'C:\Program Files\LLVM\bin' | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+
+      - name: Configure R to use Clang 23 on Windows
+        if: runner.os == 'Windows' && matrix.config.compiler == 'clang'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force "$HOME/.R" | Out-Null
+
+          @"
+          CC=clang23
+          CXX=clang++23
+          CXX11=clang++23
+          CXX14=clang++23
+          CXX17=clang++23
+          CXX20=clang++23
+          FC=gfortran
+          F77=gfortran
+          AR=llvm-ar
+          NM=llvm-nm
+          RANLIB=llvm-ranlib
+          SHLIB_LD=clang23
+          SHLIB_CXXLD=clang++23
+          "@ | Out-File -FilePath "$HOME/.R/Makevars.win" -Encoding ASCII
+          @"
+          CC=clang23
+          CXX=clang++23
+          CXX11=clang++23
+          CXX14=clang++23
+          CXX17=clang++23
+          CXX20=clang++23
+          FC=gfortran
+          F77=gfortran
+          AR=llvm-ar
+          NM=llvm-nm
+          RANLIB=llvm-ranlib
+          SHLIB_LD=clang23
+          SHLIB_CXXLD=clang++23
+          "@ | Out-File -FilePath "$HOME/.R/Makevars" -Encoding ASCII
+          
+      # --------------------------------------------------------------------
+      # Diagnostic step
+      # --------------------------------------------------------------------
+
+      - name: Show selected compiler configuration
+        shell: bash
+        run: |
+          echo "Runner OS: $RUNNER_OS"
+          echo "Requested compiler: ${{ matrix.config.compiler }}"
+          echo
+
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            if [ -f "$HOME/.R/Makevars.win" ]; then
+              cat "$HOME/.R/Makevars.win"
+            fi
+
+            where.exe clang23 || true
+            where.exe clang++23 || true
+            where.exe llvm-ar || true
+          else
+            if [ -f "$HOME/.R/Makevars" ]; then
+              cat "$HOME/.R/Makevars"
+            fi
+          fi
+
+          echo
+          echo "Compiler versions:"
+          gcc --version || true
+          g++ --version || true
+          clang --version || true
+          clang++ --version || true
+          gfortran --version || true
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
+          dependencies: '"hard"'
           extra-packages: any::rcmdcheck
           needs: check
 
       - uses: r-lib/actions/check-r-package@v2
         with:
-          upload-snapshots: true
-          args: 'c("--no-manual","--as-cran")'
-          build_args: 'c("--no-manual","--compact-vignettes=gs+qpdf")'
+          upload-results: true
+          args: 'c("--no-manual", "--as-cran")'
+          build_args: 'c("--no-manual", "--compact-vignettes=gs+qpdf")'
